@@ -1,0 +1,21 @@
+version: '3.4'
+
+services:
+
+  nginx:
+    container_name: logback-nginx
+    image: nginx:1.13
+    restart: always
+    ports:
+      - "80:80"
+#    - 443:443
+    volumes:
+    - ./nginx/conf.d:/etc/nginx/conf.d
+
+  qrcoderedemption:
+    image: qrcoderedemption
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    ports:
+      - 81:8000

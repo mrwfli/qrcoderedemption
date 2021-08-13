@@ -1,0 +1,20 @@
+server:
+  port: 8001
+
+spring:
+  application:
+    name: qrcoderedemption
+  datasource:
+    url: jdbc:oracle:thin:@192.168.200.157:1521:ORCL 
+    username: db
+    password: db
+    driver-class-name: oracle.jdbc.OracleDriver
+    platform: org.hibernate.dialect.Oracle12cDialect
+
+QRCode:
+  Verfy: "https://fwhk.cccdihk.com/carpark-api/verify/"
+  Redemption: "https://fwhk.cccdihk.com/carpark-api/redeem/"
+
+Redemption:
+  MaxFreeHours: 400
+  PaidGraceMinutes: 15
