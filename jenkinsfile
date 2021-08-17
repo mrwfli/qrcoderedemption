@@ -12,11 +12,16 @@ pipeline {
         git 'https://github.com/mrwfli/qrcoderedemption.git'
       }
     }
-    // stage('Build') {
-    //    steps {
-    //      sh 'npm install'
-    //    }
-    // }
+    stage("Checkout") {
+        steps {
+            checkout scm
+        }
+    }
+    stage('Build') {
+       steps {
+           sh 'mvn -B -DskipTests clean package' 
+       }
+    }
     // stage('Test') {
     //   steps {
     //     sh 'npm test'
