@@ -1,12 +1,48 @@
-node {  
-   stage('Stage 1'){
-       echo 'Hello World 1'
-   }
-   stage('Stage 2'){
-       echo 'Hello World 2'
-   }
-   stage('checkout'){
-       echo 'checkout from github'
-       git url: 'https://github.com/mrwfli/qrcoderedemption.git', branch: 'master'
-   }
+// node {  
+//    stage('Stage 1'){
+//        echo 'Hello World 1'
+//    }
+//    stage('Stage 2'){
+//        echo 'Hello World 2'
+//    }
+//    stage('checkout'){
+//        echo 'checkout from github'
+//        git url: 'https://github.com/mrwfli/qrcoderedemption.git', branch: 'master'       
+//    }
+// }
+
+// Jenkinsfile (Declarative Pipeline)
+pipeline {
+    agent any
+
+    stages {
+        stage('Build') {
+            steps {
+                echo 'Building..'
+            }
+        }
+        stage('Test') {
+            steps {
+                echo 'Testing..'
+            }
+        }
+        stage('Deploy') {
+            steps {
+                echo 'Deploying....'
+            }
+        }
+    }
+}
+
+// Jenkinsfile (Scripted Pipeline)
+node {
+    stage('Build') {
+        echo 'Building....'
+    }
+    stage('Test') {
+        echo 'Building....'
+    }
+    stage('Deploy') {
+        echo 'Deploying....'
+    }
 }
