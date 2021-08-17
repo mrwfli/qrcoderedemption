@@ -37,12 +37,12 @@ pipeline {
 // Jenkinsfile (Scripted Pipeline)
 node {
     stage('Build') {
-        echo 'Building....'
+        echo 'Building....node'
     }
     stage('Test') {
-        echo 'Building....'
+        echo 'Building....node'
     }
     stage('Deploy') {
-        echo 'Deploying....'
+        echo 'Deploying....node'
     }
 }
