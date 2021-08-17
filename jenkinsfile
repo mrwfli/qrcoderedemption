@@ -3,8 +3,9 @@ pipeline {
     registry = "frankiewfli/qrcoderedemption"
     registryCredential = 'dockerhub'
     dockerImage = ''
+    mvnHome = tool 'maven-3.8.2'
   }
-  def mvnHome = tool 'maven-3.8.2'
+
   agent any
   //tools {nodejs "node" }
   stages {
@@ -20,7 +21,7 @@ pipeline {
     }
     stage('Build') {
        steps {
-         sh "'${mvnHome}/bin/mvn' clean install"
+         sh "'${env.mvnHome}/bin/mvn' clean install"
        }
     }
     // stage('Test') {
