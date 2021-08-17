@@ -2,10 +2,19 @@ pipeline{
     agent any
 
     stages{
+     
       stage("init"){
          
           steps {        
             echo "$GIT_BRANCH"        
+          }
+      }
+
+       
+      stage("build"){
+         
+          steps {        
+               sh(script: 'docker-compose build')     
           }
       }
 
