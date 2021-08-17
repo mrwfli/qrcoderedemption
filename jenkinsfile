@@ -22,11 +22,6 @@ pipeline {
 
     stages {
         
-        stage('Clone repository') {               
-             
-            checkout scm    
-        }     
-
         stage('Build') {
             steps {
                script {
@@ -46,15 +41,17 @@ pipeline {
             }
         }
         stage('Deploy') {
-            steps {
+        steps {
+            script {
                 echo 'Deploying....'
                 docker.withRegistry('https://registry.hub.docker.com', "${env.registryCredential}") {            
                 app.push("${env.BUILD_NUMBER}")            
-                app.push("latest")    
+                app.push("latest")
+                }
+                }    
             }
         }
     }
-}
 }
 
 // Jenkinsfile (Scripted Pipeline)
