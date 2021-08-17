@@ -24,11 +24,16 @@ pipeline {
          sh "'${env.mvnHome}/bin/mvn' clean install"
        }
     }
-    // stage('Test') {
-    //   steps {
-    //     sh 'npm test'
-    //   }
-    // }
+    stage('Test') {
+        steps {
+            sh 'mvn test'
+        }
+        post {
+            always {
+                junit 'target/surefire-reports/*.xml'
+            }
+        }
+    }
     stage('Building image') {
       steps{
         script {
