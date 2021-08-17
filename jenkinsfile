@@ -2,8 +2,12 @@ pipeline{
     agent any
 
     stages{
-        steps("INIT") {            
-            echo "$GIT_BRANCH"
-        }
+      stage("init"){
+         
+          steps {        
+            echo "$GIT_BRANCH"        
+          }
+      }
+
     }
 }
