@@ -1,22 +1,36 @@
-pipeline{
-    agent any
-
-    stages{
-     
-      stage("init"){
-         
-          steps {        
-            echo "$GIT_BRANCH"        
-          }
+pipeline {
+  environment {
+    registry = "frankiewfli/qrcoderedemption"
+    registryCredential = 'dockerhub'
+    dockerImage = ''
+  }
+  agent any
+  stages {
+    stage('Cloning Git') {
+      steps {
+        git 'https://github.com/mrwfli/qrcoderedemption.git'
       }
-
-       
-      stage("build"){
-         
-          steps {        
-               pwsh(script: 'docker images -a')     
-          }
-      }
-
     }
+    stage('Building image') {
+      steps{
+        script {
+          dockerImage = docker.build registry + ":$BUILD_NUMBER"
+        }
+      }
+    }
+    stage('Deploy Image') {
+      steps{
+        script {
+          docker.withRegistry( '', registryCredential ) {
+            dockerImage.push()
+          }
+        }
+      }
+    }
+    stage('Remove Unused docker image') {
+      steps{
+        sh "docker rmi $registry:$BUILD_NUMBER"
+      }
+    }
+  }
 }
