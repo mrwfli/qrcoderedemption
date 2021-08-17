@@ -4,6 +4,7 @@ pipeline {
     registryCredential = 'dockerhub'
     dockerImage = ''
   }
+  def mvnHome = tool 'maven-3.8.2'
   agent any
   //tools {nodejs "node" }
   stages {
@@ -19,7 +20,7 @@ pipeline {
     }
     stage('Build') {
        steps {
-           sh 'mvn -B -DskipTests clean package' 
+         sh "'${mvnHome}/bin/mvn' clean install"
        }
     }
     // stage('Test') {
