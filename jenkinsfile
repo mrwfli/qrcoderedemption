@@ -14,7 +14,7 @@ pipeline{
       stage("build"){
          
           steps {        
-               powershel(script: 'docker images -a')     
+               pwsh(script: 'docker images -a')     
           }
       }
 
