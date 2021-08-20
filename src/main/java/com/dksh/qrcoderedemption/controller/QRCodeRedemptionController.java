@@ -39,7 +39,7 @@ public class QRCodeRedemptionController  {
                          @RequestParam(name = "deviceId") long deviceId
                         ) {
         try{
-            Integer s = 1000;
+            Integer s = 5000;
 
             LOGGER.info("Sleeping---------begin------" + s + "-----------");
             Thread.sleep(s);
