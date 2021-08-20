@@ -24,7 +24,7 @@ public class ScheduledTasks {
     //@Value("${ScheduledTasks.Cron}")
     private static final String cron = "";
 
-    @Scheduled(cron = cron)
+    @Scheduled(fixedRate = 50000)
     public void UploadQRCodeRedemption() {
       //  log.info("The time is now {}", dateFormat.format(new Date()));
 
