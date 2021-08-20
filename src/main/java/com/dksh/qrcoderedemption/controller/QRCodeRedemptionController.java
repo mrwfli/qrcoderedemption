@@ -39,7 +39,9 @@ public class QRCodeRedemptionController  {
                          @RequestParam(name = "deviceId") long deviceId
                         ) {
         try{
-
+            LOGGER.info("Sleeping---------begin-----------------");
+            Thread.sleep(100000);
+            LOGGER.info("Sleeping---------end-----------------");
             String result = "";
 
             String[] arrStr = qrcode.split("\\|\\|");

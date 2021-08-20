@@ -44,17 +44,14 @@ pipeline {
     stage('Deploy Image') {
       steps{
          script {
-
                docker.withRegistry('https://registry.hub.docker.com', registryCredential) {
-
-                def customImage = docker.build("frankiewfli/qrcoderedemption")
-
+                def customImage = docker.build(registry)
                 /* Push the container to the custom Registry */
                 customImage.push()
             }
           }
         }
-      }
+    }
     stage('Remove Unused docker image') {
       steps{
         sh "docker rmi $registry:$BUILD_NUMBER"

@@ -18,3 +18,5 @@ QRCode:
 Redemption:
   MaxFreeHours: 400
   PaidGraceMinutes: 15
+
+ScheduledTasks.Cron:  "50 41 21 * * ?"
