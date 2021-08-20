@@ -40,7 +40,7 @@ public class QRCodeRedemptionController  {
                         ) {
         try{
             LOGGER.info("Sleeping---------begin-----------------");
-            Thread.sleep(10000);
+            Thread.sleep(1000);
             LOGGER.info("Sleeping---------end-----------------");
             String result = "";
 
