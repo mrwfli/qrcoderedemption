@@ -72,4 +72,16 @@ public class QRCodeResposeModel {
     public void setExetime(String exetime) {
         this.exetime = exetime;
     }
+
+    @Override
+    public String toString() {
+        return "QRCodeResposeModel{" +
+                "status=" + status +
+                ", code=" + code +
+                ", message='" + message + '\'' +
+                ", exetime='" + exetime + '\'' +
+                ", errors=" + errors +
+                ", description='" + description + '\'' +
+                '}';
+    }
 }

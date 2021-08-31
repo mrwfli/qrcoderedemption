@@ -25,5 +25,12 @@ public class VerifyResponseModel extends QRCodeResposeModel {
         this.data = data;
     }
 
+    @Override
+    public String toString() {
+
+        return super.toString() + " VerifyResponseModel{" +
+                "data=" + data +
+                '}';
+    }
 }
 

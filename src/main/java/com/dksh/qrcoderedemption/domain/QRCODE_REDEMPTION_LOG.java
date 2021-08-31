@@ -1,6 +1,7 @@
 package com.dksh.qrcoderedemption.domain;
 
 import javax.persistence.*;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 @Entity

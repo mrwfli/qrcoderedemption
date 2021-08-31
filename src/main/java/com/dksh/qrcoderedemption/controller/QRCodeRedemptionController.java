@@ -1,18 +1,37 @@
 package com.dksh.qrcoderedemption.controller;
 
 import com.dksh.qrcoderedemption.domain.CardInPark;
+import com.dksh.qrcoderedemption.helper.CommonInputStreamResource;
 import com.dksh.qrcoderedemption.model.QRCodeResposeModel;
 import com.dksh.qrcoderedemption.model.VerifyResponseModel;
 import com.dksh.qrcoderedemption.repository.CardInParkRepository;
+import com.dksh.qrcoderedemption.service.CSVService;
 import com.dksh.qrcoderedemption.service.QRCodeRedemptionValidation;
 import com.dksh.qrcoderedemption.service.RedemptionService;
+import org.apache.http.HttpException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 @RestController
 public class QRCodeRedemptionController  {
@@ -28,6 +47,10 @@ public class QRCodeRedemptionController  {
     @Autowired
     CardInParkRepository cardInParkRepository;
 
+    @Autowired
+    CSVService fileService;
+
+
     public QRCodeRedemptionController() {
     }
 
@@ -39,11 +62,7 @@ public class QRCodeRedemptionController  {
                          @RequestParam(name = "deviceId") long deviceId
                         ) {
         try{
-            Integer s = 5000;
 
-            LOGGER.info("Sleeping---------begin------" + s + "-----------");
-            Thread.sleep(s);
-            LOGGER.info("Sleeping---------end-----------------");
             String result = "";
 
             String[] arrStr = qrcode.split("\\|\\|");
@@ -125,4 +144,21 @@ public class QRCodeRedemptionController  {
 //        // RedemptionResposeModel result = service.Redemption(qrcode);
 //        return "";
 //    }
+
+//
+//    @GetMapping("/download")
+//    public ResponseEntity<Resource> getFile() throws HttpException, IOException {
+//        String filename = "tutorials.csv";
+//        ByteArrayInputStream csv =  fileService.GenerateCSV();
+//        Resource resource = new CommonInputStreamResource(csv);
+//        redemptionService.UploadCSV(resource);
+//
+//        InputStreamResource file = new InputStreamResource(csv);
+//
+//        return ResponseEntity.ok()
+//                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filename)
+//                .contentType(MediaType.parseMediaType("application/csv"))
+//                .body(file);
+//    }
+
 }

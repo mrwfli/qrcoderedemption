@@ -11,14 +11,14 @@ services:
       - service1
       - service2
   service1:
-    image: frankiewfli/qrcoderedemption
+    image: frankiewfli/qrcoderedemption:latest
     # build:
     #   context: .
     #   dockerfile: Dockerfile
     ports:
       - "9191:8001"
   service2:
-    image: frankiewfli/qrcoderedemption
+    image: frankiewfli/qrcoderedemption:latest
     # build:
     #   context: .
     #   dockerfile: Dockerfile
