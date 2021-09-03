@@ -10,10 +10,6 @@ import java.io.IOException;
 @SpringBootTest
 class QrcoderedemptionApplicationTests {
 
-	@Test
-	void contextLoads() {
-	}
-
 //	@Test
 //	public void givenNameOfFieldIsChanged_whenSerializing_thenCorrect()
 //			throws JsonParseException, IOException {

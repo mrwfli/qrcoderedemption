@@ -1,42 +1,24 @@
 package com.dksh.qrcoderedemption.controller;
 
 import com.dksh.qrcoderedemption.domain.CardInPark;
-import com.dksh.qrcoderedemption.helper.CommonInputStreamResource;
 import com.dksh.qrcoderedemption.model.QRCodeResposeModel;
 import com.dksh.qrcoderedemption.model.VerifyResponseModel;
-import com.dksh.qrcoderedemption.repository.CardInParkRepository;
 import com.dksh.qrcoderedemption.service.CSVService;
+import com.dksh.qrcoderedemption.service.CarParkService;
 import com.dksh.qrcoderedemption.service.QRCodeRedemptionValidation;
 import com.dksh.qrcoderedemption.service.RedemptionService;
-import org.apache.http.HttpException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.FileSystemResource;
 import org.springframework.web.bind.annotation.*;
-
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.InputStreamResource;
-import org.springframework.core.io.Resource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 @RestController
 public class QRCodeRedemptionController  {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(QRCodeRedemptionController.class);
+    private final Logger LOGGER = LoggerFactory.getLogger(QRCodeRedemptionController.class);
 
     @Autowired
     QRCodeRedemptionValidation qrCodeRedemptionValidation;
@@ -45,11 +27,7 @@ public class QRCodeRedemptionController  {
     RedemptionService redemptionService;
 
     @Autowired
-    CardInParkRepository cardInParkRepository;
-
-    @Autowired
-    CSVService fileService;
-
+    CarParkService carParkService;
 
     public QRCodeRedemptionController() {
     }
@@ -78,7 +56,7 @@ public class QRCodeRedemptionController  {
                 cardtypels.add(577L);
             }
 
-            CardInPark cardinpark = cardInParkRepository.findByCARDIDAndCARDTYPEIn(cardId,cardtypels);
+            CardInPark cardinpark = carParkService.GetCardInPark(cardId,cardtypels); //cardInParkRepository.findByCARDIDAndCARDTYPEIn(cardId,cardtypels);
 
             if(cardinpark == null) {
                 return "<img src=\"\\images\\record_not_found.jpg\">\n" +

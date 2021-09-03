@@ -24,18 +24,18 @@ import org.springframework.stereotype.Service;
 public class CSVService {
 
     @Autowired
-    QRCODE_REDEMPTION_LOG_Repository qrcode_redemption_log_repository;
+    private CarParkService carParkService;
 
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
-    public ByteArrayInputStream GenerateCSV() throws IOException {
+    public ByteArrayInputStream GenerateCSV() throws Exception {
 
         Date date = new Date(System.currentTimeMillis() - 24 * 60 * 60 * 1000); // yesterday
         String yesterday = dateFormat.format(date);
 
-        List<QRCODE_REDEMPTION_LOG> logs = qrcode_redemption_log_repository.findByCREATEDATE(yesterday);
+        List<QRCODE_REDEMPTION_LOG> logs = carParkService.GetRedemptionLogByCreateDate(yesterday); //qrcode_redemption_log_repository.findByCREATEDATE(yesterday);
 
-        ByteArrayInputStream stream = CSVHelper.tutorialsToCSV(logs);
+        ByteArrayInputStream stream = CSVHelper.QRCodeRedemptionLogToCSV(logs);
 
         return stream;
     }

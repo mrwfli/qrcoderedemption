@@ -18,7 +18,7 @@ import java.util.List;
 public class CSVHelper {
 
 
-public static ByteArrayInputStream tutorialsToCSV(List<QRCODE_REDEMPTION_LOG> logs)  throws IOException {
+public static ByteArrayInputStream QRCodeRedemptionLogToCSV(List<QRCODE_REDEMPTION_LOG> logs)  throws IOException {
 
     List<String> header = new ArrayList<>();
     header.add("REDEMPTIONID");
@@ -34,8 +34,8 @@ public static ByteArrayInputStream tutorialsToCSV(List<QRCODE_REDEMPTION_LOG> lo
 
         for (QRCODE_REDEMPTION_LOG log : logs) {
             List<String> data = Arrays.asList(
-                    String.valueOf(log.getREDEMPTIONID()),
-                    String.valueOf(log.getCREATEDATE())
+                                String.valueOf(log.getREDEMPTIONID()),
+                                String.valueOf(log.getCREATEDATE())
             );
 
             csvPrinter.printRecord(data);

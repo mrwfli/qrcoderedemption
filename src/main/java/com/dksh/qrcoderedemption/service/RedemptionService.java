@@ -4,19 +4,14 @@ import com.dksh.qrcoderedemption.component.RestTemplateHelper;
 import com.dksh.qrcoderedemption.model.CSVResponseModel;
 import com.dksh.qrcoderedemption.model.QRCodeResposeModel;
 import com.dksh.qrcoderedemption.model.VerifyResponseModel;
-import org.apache.http.HttpException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-
-import java.io.ByteArrayInputStream;
 
 @Service
 public class RedemptionService {
@@ -83,5 +78,4 @@ public class RedemptionService {
         }
         return null;
     }
-
 }

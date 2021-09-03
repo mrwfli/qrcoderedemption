@@ -10,6 +10,9 @@ spring:
     password: db
     driver-class-name: oracle.jdbc.OracleDriver
     platform: org.hibernate.dialect.Oracle12cDialect
+#  jpa:
+#    hibernate:
+#      ddl-auto: validate
 
 QRCode:
   Verfy: "https://fwhk.cccdihk.com/carpark-api/verify/"

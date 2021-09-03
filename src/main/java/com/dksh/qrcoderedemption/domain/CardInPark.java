@@ -118,7 +118,7 @@ public class CardInPark  implements Serializable  {
         this.HOURLYCOUPON = HOURLYCOUPON;
     }
 
-    public double getCASHCOUPON() {
+    public Number getCASHCOUPON() {
         return CASHCOUPON;
     }
 

@@ -15,19 +15,7 @@ import java.util.Date;
 public class QRCodeRedemptionValidationImp implements  QRCodeRedemptionValidation{
 
     @Autowired
-    CardInParkRepository cardInParkRepository;
-
-    @Autowired
-    CardEventLogRepository cardEventLogRepository;
-
-    @Autowired
-    CardTransactionRepository cardTransactionRepository;
-
-    @Autowired
-    QRCODE_REDEMPTION_LOG_Repository qrcode_redemption_log_repository;
-
-    @Autowired
-    TempCustTriggerQueueRepository tempCustTriggerQueueRepository;
+    private CarParkService carParkService;
 
     @Value("${Redemption.PaidGraceMinutes}")
     int PaidGraceMinutes;
@@ -35,7 +23,7 @@ public class QRCodeRedemptionValidationImp implements  QRCodeRedemptionValidatio
     @Value("${Redemption.MaxFreeHours}")
     int MaxFreeHours;
 
-     private  SimpleDateFormat formatter;
+    private  SimpleDateFormat formatter;
 
     @Override
     public String VerifyValidate(VerifyResponseModel data,String cardId,long hourlycoupon, long cardtype){
@@ -69,7 +57,7 @@ public class QRCodeRedemptionValidationImp implements  QRCodeRedemptionValidatio
         formatter= new SimpleDateFormat("yyyy-MM-dd");
         String now = formatter.format(date);
 
-        QRCODE_REDEMPTION_LOG log = qrcode_redemption_log_repository.findByREDEMPTIONIDAndCREATEDATE(redemption_id,now);
+        QRCODE_REDEMPTION_LOG log = carParkService.GetRedemptionLogByIdAndCreateDate(redemption_id,now); //qrcode_redemption_log_repository.findByREDEMPTIONIDAndCREATEDATE(redemption_id,now);
 
         if(log != null){
             return "<img src=\"\\images\\cp02-invalid-coupon.png\">\n" +
@@ -121,7 +109,7 @@ public class QRCodeRedemptionValidationImp implements  QRCodeRedemptionValidatio
 
         long entrytime  = cardinpark.getENTRYTIME().getTime();
 
-        double h = cardinpark.getHOURLYCOUPON() + qrcode_hour +  PaidGraceMinutes/60;
+        double h = cardinpark.getHOURLYCOUPON() + qrcode_hour +  PaidGraceMinutes / 60;
 
         Date freetiltime = new Date(entrytime + ((int)h * 60 * 60 * 1000));
         cardinpark.setFREETILLTIME(freetiltime);
@@ -130,7 +118,8 @@ public class QRCodeRedemptionValidationImp implements  QRCodeRedemptionValidatio
         cardinpark.setPAYTIME(date);
         cardinpark.setHOURLYCOUPON(cardinpark.getHOURLYCOUPON() + qrcode_hour);
 
-        cardInParkRepository.save(cardinpark);
+        //cardInParkRepository.save(cardinpark);
+        carParkService.SaveCarInPark(cardinpark);
 
         CARDEVENTLOG log = new CARDEVENTLOG(date,
                 cardinpark.getCARDTYPE(),
@@ -140,7 +129,8 @@ public class QRCodeRedemptionValidationImp implements  QRCodeRedemptionValidatio
                 DeviceId,
                 cardinpark.getFACILITYKEY());
 
-        cardEventLogRepository.save(log);
+        // cardEventLogRepository.save(log);
+        carParkService.SaveCardEventLog(log);
 
         formatter= new SimpleDateFormat("yyyy-MM-dd");
         CardTransaction tran = new CardTransaction(date,
@@ -157,7 +147,8 @@ public class QRCodeRedemptionValidationImp implements  QRCodeRedemptionValidatio
                 cardinpark.getFACILITYKEY(),
                 0,0,0,0);
 
-        cardTransactionRepository.save(tran);
+       // cardTransactionRepository.save(tran);
+        carParkService.SaveCardTransaction(tran);
 
         QRCODE_REDEMPTION_LOG redemption_log = new QRCODE_REDEMPTION_LOG(
                 cardinpark.getCARDID(),
@@ -169,7 +160,8 @@ public class QRCodeRedemptionValidationImp implements  QRCodeRedemptionValidatio
                 date,
                 status == 1 ? "Completed" : "Open");
 
-        qrcode_redemption_log_repository.save(redemption_log);
+        // qrcode_redemption_log_repository.save(redemption_log);
+        carParkService.SaveQrcode_redemption_log(redemption_log);
 
         TempCustTriggerQueue queue = new TempCustTriggerQueue(
                 date, //Date
@@ -181,8 +173,8 @@ public class QRCodeRedemptionValidationImp implements  QRCodeRedemptionValidatio
                 cardinpark.getFACILITYKEY(),//int
                 0);
 
-        tempCustTriggerQueueRepository.save(queue);
-
+       // tempCustTriggerQueueRepository.save(queue);
+        carParkService.SaveTempCustTriggerQueue(queue);
     }
 
     @Override
