@@ -7,6 +7,7 @@ import com.dksh.qrcoderedemption.service.CSVService;
 import com.dksh.qrcoderedemption.service.CarParkService;
 import com.dksh.qrcoderedemption.service.QRCodeRedemptionValidation;
 import com.dksh.qrcoderedemption.service.RedemptionService;
+import org.apache.http.HttpException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -96,6 +97,14 @@ public class QRCodeRedemptionController  {
             return "<img src=\"\\images\\cp02-invalid_coupon.png\">\n" +
                     "<div class=right_button>\n" +
                     "\t<img src=\"\\images\\cp01-quit.png\" onmousedown=backToHome()>\n" +
+                    "</div>";
+        }
+        catch (HttpException ex){
+            LOGGER.error(ex.getMessage());
+            LOGGER.error("QRCode:"+ qrcode);
+            return "<img src=\"\\images\\connect_server_failed.png\">\n" +
+                    "<div class=right_button>\n" +
+                    "\t<img src=\"\\images\\return_small.png\" onmousedown=backToQueryRecord()>\n" +
                     "</div>";
         }
         catch (Exception ex){

@@ -1,11 +1,11 @@
 server:
-  port: 8001
+  port: 8002
 
 spring:
   application:
     name: qrcoderedemption
   datasource:
-    url: jdbc:oracle:thin:@192.168.200.157:1521:ORCL 
+    url: jdbc:oracle:thin:@192.168.200.164:1521:ORCL
     username: db
     password: db
     driver-class-name: oracle.jdbc.OracleDriver
@@ -20,7 +20,7 @@ QRCode:
   CSV: "https://fwhk.cccdihk.com/carpark-api/sync/"
 
 Redemption:
-  MaxFreeHours: 400
+  MaxFreeHours: 4
   PaidGraceMinutes: 15
 
 ScheduledTasks:

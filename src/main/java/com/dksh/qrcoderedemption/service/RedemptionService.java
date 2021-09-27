@@ -4,6 +4,7 @@ import com.dksh.qrcoderedemption.component.RestTemplateHelper;
 import com.dksh.qrcoderedemption.model.CSVResponseModel;
 import com.dksh.qrcoderedemption.model.QRCodeResposeModel;
 import com.dksh.qrcoderedemption.model.VerifyResponseModel;
+import org.apache.http.HttpException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,19 +31,19 @@ public class RedemptionService {
     @Autowired
     private RestTemplateHelper restTemplateHelper;
 
-    public VerifyResponseModel Verify(String qrocde) {
+    public VerifyResponseModel Verify(String qrocde) throws Exception {
 
-        try{
-            MultiValueMap<String, String> map = new LinkedMultiValueMap<String, String>();
-            map.add("qrcode", qrocde);
-            VerifyResponseModel result = restTemplateHelper.postForEntity(VerifyResponseModel.class, verify_url, map);
-            LOGGER.info(result.toString());
-            return result;
-        } catch (Exception e){
-            System.out.println(e);
-            LOGGER.error(e.getMessage());
+        MultiValueMap<String, String> map = new LinkedMultiValueMap<String, String>();
+        map.add("qrcode", qrocde);
+        VerifyResponseModel result = restTemplateHelper.postForEntity(VerifyResponseModel.class, verify_url, map);
+
+        if(result == null){
+            LOGGER.error("Cannot retrive the data from QRCODE redemption API");
+            throw new HttpException("QRCODE redemption API Exception");
         }
-        return null;
+
+        LOGGER.info(result.toString());
+        return result;
     }
 
     public QRCodeResposeModel Redemption(String qrcode) throws Exception {
