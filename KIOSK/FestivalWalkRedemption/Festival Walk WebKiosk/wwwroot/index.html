@@ -1,0 +1,1571 @@
+<!DOCTYPE html>  
+<html>
+<head>
+	<meta name="viewport" content="no-cache, user-scaleable=no, initial-scale=1.0, maximum-scale=1.0" charset="UTF-8"/>
+	<title>DKSH Festival Walk 3 in 1 Kiosk</title>
+	<link type="text/css" rel="stylesheet" href="css/jquery-ui.css"/>
+	<link type="text/css" rel="stylesheet" href="css/webkiosk.css"/>
+	<script type="text/javascript" src="js/jquery-1.12.4.js"></script>
+	<script type="text/javascript" src="js/jquery-ui.js"></script>
+	<script type="text/javascript" src="js/moment.min.js"></script>
+	<script type="text/javascript" src="js/action.js"></script>
+	<script type="text/javascript" src="js/clock.js"></script>
+	<script type="text/javascript" src="js/webscreen.js"></script>
+	<script type="text/javascript" src="js/jquery-1.7.min.js"></script>
+	<script type="text/javascript" src="js/jquery-ui-1.8.min.js"></script>
+	<script>
+		var fuid = 709;
+		var demo = false;
+		var demoRecordNotFound = false;
+		var printDebug = true;
+		
+		//program variables
+		var skipInitSend = true;
+		var acceptcard = false;
+		var mapDrawOnce = false;
+		var fromInvalidScreen = false;
+		var originalDiscounted = -1;
+		var idleTimer;
+		var cardpolledfunc;
+		var cardpaidfunc;
+		var recordQueryLink;
+		var	repollCouponTime = 500;
+		var linkpara;
+		
+
+		var zrServer  = "127.0.0.1:8181";
+		var qrcodeRedemptionServer  = "127.0.0.1:8002";
+		var pgsServer = "192.168.1.20";
+		var evmsServer= "192.168.1.10";
+
+	
+		$(document).ready(function() 
+		{
+			window.scrollTo(0,1);
+			
+			$('#clickme').click(function() {
+				if ( printDebug ) console.group("User start action at %s (%s)",$('#Clock').text().substring(0,10),$('#Clock').text().substring(10));
+				acceptcard = false;
+				hideExcept('#disclaimer','left');
+				$('#disclaimer').css("visibility","visible");
+                $('#disclaimer').show("slide",{ direction: "right" });
+				$('#homebutton').css("visibility","visible");
+				$('#homebutton').fadeIn();
+				setIdleTimeout();
+			});
+			
+			$('#disclaimeryes').click(function() {
+				if ( printDebug ) console.log("terms accepted");
+				acceptcard = false;
+				hideExcept('#selfunction','left');
+				$('#selfunction').css("visibility","visible");
+                $('#selfunction').show("slide",{ direction: "right" });
+				$('#homebutton').css("visibility","visible");
+				$('#homebutton').fadeIn();
+				setIdleTimeout();
+			});
+			
+			$('#disclaimerno').click(function() {
+				if ( printDebug ) console.log("terms NOT accepted");
+				backToHome();
+			});
+			
+			$('#selfunction1').click(function() {
+				if ( printDebug ) console.log("function 1 : coupon redemption");
+				cardpolledfunc = 1;
+				acceptcard = true;
+				originalDiscounted = -1;	
+				fromInvalidScreen = false;
+				repollCouponTime = 500;
+				parkingQueryLink = "";
+				if ( printDebug ) console.log("start poll record for function 1");
+				doSend('CTRL','startPoll?OCTOPUS&VISA_CREDITCARD&MASTER_CREDITCARD');
+				hideExcept('#swipecard','left');
+				$('#swipecard').css("visibility","visible");
+                $('#swipecard').show("slide",{ direction: "right" });
+				$('#homebutton').css("visibility","visible");
+				$('#redeemicon').css("filter","grayscale(0%)");
+				$('#redeemicon').css("color","#000000");
+				$('#redeemicon').css("font-weight","bold");
+				$('#searchicon').css("filter","grayscale(100%)");
+				$('#searchicon').css("color","#AAAAAA");
+				$('#searchicon').css("font-weight","normal");
+				$('#evicon').css("filter","grayscale(100%)");
+				$('#evicon').css("color","#AAAAAA");
+				$('#evicon').css("font-weight","normal");
+				$('#homebutton').fadeIn();
+				setIdleTimeout();
+			});
+			
+			$('#selfunction2').click(function() {
+				if ( printDebug ) console.log("function 2 : car searching");
+				cardpolledfunc = 2;
+				acceptcard = true;
+				mapDrawOnce = false;
+				if ( printDebug ) console.log("start poll record for function 2");
+				doSend('CTRL','startPoll?OCTOPUS&VISA_CREDITCARD&MASTER_CREDITCARD');
+				hideExcept('#swipecard','left');
+				$('#swipecard').css("visibility","visible");
+                $('#swipecard').show("slide",{ direction: "right" });
+				$('#homebutton').css("visibility","visible");
+				$('#redeemicon').css("filter","grayscale(100%)");
+				$('#redeemicon').css("color","#AAAAAA");
+				$('#redeemicon').css("font-weight","normal");
+				$('#searchicon').css("filter","grayscale(0%)");
+				$('#searchicon').css("color","#000000");
+				$('#searchicon').css("font-weight","bold");
+				$('#evicon').css("filter","grayscale(100%)");
+				$('#evicon').css("color","#AAAAAA");
+				$('#evicon').css("font-weight","normal");
+				$('#homebutton').fadeIn();
+				setIdleTimeout();
+			});
+			
+			$('#selfunction3').click(function() {
+				if ( printDebug ) console.log("function 3 : ev charging service selection");
+				cardpolledfunc = 0;
+				hideExcept('#selevfunction','left');
+				$('#selevfunction').css("visibility","visible");
+				$('#selevfunction').show("slide",{ direction: "right" });
+				$('#homebutton').css("visibility","visible");
+				$('#redeemicon').css("filter","grayscale(100%)");
+				$('#redeemicon').css("color","#AAAAAA");
+				$('#redeemicon').css("font-weight","normal");
+				$('#searchicon').css("filter","grayscale(100%)");
+				$('#searchicon').css("color","#AAAAAA");
+				$('#searchicon').css("font-weight","normal");
+				$('#evicon').css("filter","grayscale(0%)");
+				$('#evicon').css("color","#000000");
+				$('#evicon').css("font-weight","bold");
+				$('#homebutton').fadeIn();
+				setIdleTimeout();
+			});
+			
+			$('#selfunction5').click(function() {
+				if ( printDebug ) console.log("function 5 : ev start charge");
+				cardpolledfunc = 0;
+				if ( printDebug ) console.log("start show awaiting for function 5");
+				hideExcept('#functionarea','left');
+				$('#functionarea').load("loading.html");
+				$('#functionarea').css("visibility","visible");
+				$('#functionarea').show("slide",{ direction: "right" });
+				clearIdleTimeout();
+				
+				setTimeout(function(){
+					//point to server or demo page
+					if ( printDebug ) console.log("loading : http://" + evmsServer + "/ev_listawaiting.html" );
+					if ( demo ) 
+						$('#functionarea').load("demo/ev_listawaiting.html"); //demo - record 
+						//$('#functionarea').load("demo/ev_error.html); //demo start fail
+					else 
+						$('#functionarea').load("http://" + evmsServer + "/ev_listawaiting.html" ); //real
+					setIdleTimeoutWithValue(30500);
+					evCheckPage();
+				}, 500); 	
+			});
+			
+			$('#selfunction6').click(function() {
+				if ( printDebug ) console.log("function 6 : ev charging check or stop");
+				cardpolledfunc = 0;
+				hideExcept('#selevfunction2','left');
+				$('#selevfunction2').css("visibility","visible");
+				$('#selevfunction2').show("slide",{ direction: "right" });
+				$('#homebutton').css("visibility","visible");
+				$('#redeemicon').css("filter","grayscale(100%)");
+				$('#redeemicon').css("color","#AAAAAA");
+				$('#redeemicon').css("font-weight","normal");
+				$('#searchicon').css("filter","grayscale(100%)");
+				$('#searchicon').css("color","#AAAAAA");
+				$('#searchicon').css("font-weight","normal");
+				$('#evicon').css("filter","grayscale(0%)");
+				$('#evicon').css("color","#000000");
+				$('#evicon').css("font-weight","bold");
+				$('#homebutton').fadeIn();
+				setIdleTimeout();
+			});
+			
+			$('#selfunction7').click(function() {
+				evLoadChargingList();
+			});
+			
+			$('#selfunction8').click(function() {
+				if ( printDebug ) console.log("function 8 : ev stop charge by card");
+				$('#evstarteng').html("PLEASE SWIPE THE SAME CARD<br>AS USED UPON CHARGING");
+				$('#evstartchn').html("&#35531;&#20351;&#29992;&#21855;&#21205;&#20805;&#38651;&#30340;&#21345;");
+				cardpolledfunc = 8;
+				$('#cardtype').val("");
+				$('#card').val("");
+				$('#remain').val("");
+				acceptcard = true;
+				if ( printDebug ) console.log("show charging and start poll for function 8");
+				doSend('CTRL','startPoll?OCTOPUS&VISA_CREDITCARD&MASTER_CREDITCARD');
+				hideExcept('#swipeevcard','left');
+				$('#swipeevcard').css("visibility","visible");
+				$('#swipeevcard').show("slide",{ direction: "right" });
+				$('#homebutton').css("visibility","visible");
+				$('#homebutton').fadeIn();
+				setIdleTimeout();
+			});
+			
+			//java side trigger
+			$("#cardpolling").click(function() {
+				if ( printDebug ) console.log("polling... recount idle");
+				setIdleTimeout();
+			});
+			
+			$("#carderror").click(function() {
+				if ( cardpolledfunc == 4 )
+				{
+					if ( printDebug ) console.log("carderror for function 4");
+					//check if equals to S&B coupon
+					if ( parseInt($("#error").val()) == 100024 )
+					{
+						showInvalidCoupon();
+						return;
+					}
+				}
+				else if ( cardpaidfunc == 9 )
+				{
+					//show payment error
+					
+				}
+			});
+			
+			$("#cardpolled").click(function() {
+				if ( acceptcard ) 
+				{
+					acceptcard = false;
+					if ( printDebug ) console.log("polled : type:" + $("#cardtype").val() + ", id=" + $("#card").val() );
+					
+					if ( cardpolledfunc == 1 )
+					{
+						if ( printDebug ) console.log("cardpolled for function 1, calling stop poll");
+						doSend('CTRL','stopPoll');
+						//parking record
+						repollCouponTime = 500;
+						fromInvalidScreen = false;
+						recordQueryLink = "cardtype=" + $("#cardtype").val() + "&card=" + $("#card").val() + "&fuid=" + fuid;
+						//switch to query record page
+						backToQueryRecord();
+					}
+					else if ( cardpolledfunc == 2 )
+					{			
+						if ( printDebug ) console.log("cardpolled for function 2, calling stop poll");
+						doSend('CTRL','stopPoll');
+						//car search
+						linkpara = "lpn=" + $("#lpn").val() + "&cardtype=" + $("#cardtype").val() + "&card=" + $("#card").val() +"&remainvalue="+$('#remain').val();
+						mapDrawOnce = false;
+						
+						//copy remain value
+						if ( printDebug ) console.log("clone polled card : " + $('#card').val());
+						$('#maskcardbox').html($("#card").val());
+						if ( printDebug ) console.log("clone remain value : $" + $('#remain').val());
+						$('#remainvaluebox').html("$"+$('#remain').val());
+						
+						hideExcept('#functionarea','left');
+						$('#functionarea').load("loading.html");
+						$('#functionarea').css("visibility","visible");
+						$('#functionarea').show("slide",{ direction: "right" });
+						$('#homebutton').fadeOut();
+						clearIdleTimeout();
+						
+						setTimeout(function(){
+							// point to server or demo page
+							if ( printDebug ) console.log("loading : http://" + pgsServer + "/searchlpn.html?" + linkpara);
+							if ( demo && demoRecordNotFound ) 
+								$('#functionarea').load("demo/recordnotfound.html"); //demo - record not found
+							else if ( demo )
+								$('#functionarea').load("demo/searchlpn.html"); //demo - record 
+							else 
+								$('#functionarea').load("http://" + pgsServer + "/searchlpn.html?" + linkpara ); //real
+							setIdleTimeoutWithValue(30500);
+						}, 500); 	
+					}
+					else if ( cardpolledfunc == 4 )
+					{
+						if ( printDebug ) console.log("cardpolled for function 4");
+						//check if equals to S&B coupon
+						if ( parseInt($("#cardtype").val()) == 18 )
+						{
+							//check used, expired and fac etc.
+							if ( parseInt($('#cpused').val()) > 0 || parseInt($('#cpexpired').val()) > 0 || parseInt($('#cpfac').val()) != parseInt($('#faccodebox').text()) ) 
+							{
+								if ( printDebug ) console.log(parseInt($('#cardtype').val()));
+								if ( printDebug ) console.log(parseInt($('#cpused').val()));
+								if ( printDebug ) console.log(parseInt($('#cpexpired').val()));
+								if ( printDebug ) console.log(parseInt($('#cpfac').val()));
+								if ( printDebug ) console.log(parseInt($('#faccodebox').text()));
+								showInvalidCoupon();
+								return;
+							}
+						}
+						
+						var cardid = $('#cardbox').text();
+						var qrcode = $('#card').val();
+						var cardtype = $('#cardtypebox').text();
+						var coupontype = parseInt($("#cardtype").val());
+
+						//coupon redemption
+						linkpara = "cardtype=" + $('#cardtypebox').text() + "&card=" + $('#cardbox').text();
+						linkpara += "&coupontype=" + $("#cardtype").val() + "&coupon=" + $("#card").val();
+						linkpara += "&fuid=" + fuid;
+						//check if equals to S&B coupon
+						if ( parseInt($("#cardtype").val()) == 18 )
+						{
+							linkpara += "&couponvalue=" + $("#cpvalue").val();
+						}
+						
+						hideExcept('#functionarea','left');
+						$('#functionarea').load("loading.html");
+						$('#functionarea').css("visibility","visible");
+						$('#functionarea').show("slide",{ direction: "right" });
+						$('#homebutton').fadeOut();
+						clearIdleTimeout();
+						
+						setTimeout(function(){
+							if ( printDebug ) {
+								if(coupontype == 20)
+								{
+									console.log("http://"+qrcodeRedemptionServer+"/Verify?qrcode="+encodeURIComponent(qrcode) + "&cardId=" +cardid+ "&cardtype=" +cardtype +"&deviceId=" + fuid);
+								}
+								else {
+									console.log("loading : http://" + zrServer + "/redemption.html?" + linkpara);
+								}
+							}
+							if ( demo ) 
+								$('#functionarea').load("demo/redemption.html"); //demo line 
+							else 
+								//$('#functionarea').load("http://" + zrServer + "/redemption.html?" + linkpara ); //real
+							{
+								if(coupontype == 20)
+								{
+									$('#functionarea').load("http://"+qrcodeRedemptionServer+"/Verify?qrcode="+encodeURIComponent(qrcode) + "&cardId=" +cardid+ "&cardtype=" +cardtype +"&deviceId=" + fuid);								
+								}
+								else 
+								{		
+									$('#functionarea').load("http://" + zrServer + "/redemption.html?" + linkpara ); 
+								}
+							}
+
+							setIdleTimeoutWithValue(30500);
+							//call function to wait for elements
+							checkRedemptionFunction();
+						}, 500); 	
+					}
+					else if ( cardpolledfunc == 5 )
+					{
+						
+						if ( printDebug ) console.log("cardpolled for function 5, calling stop poll");
+						doSend('CTRL','stopPoll');
+						//start charge
+						linkpara = "device=" + $("#evdevicebox").text() + "&connector=" + $("#evconnectorbox").text() + "&cardtype=" + $("#cardtype").val() + "&card=" + $("#card").val() + "&addinfo=" + $("#addinfo").val();
+			
+						hideExcept('#functionarea','left');
+						$('#functionarea').load("loading.html");
+						$('#functionarea').css("visibility","visible");
+						$('#functionarea').show("slide",{ direction: "right" });
+						$('#homebutton').fadeOut();
+						clearIdleTimeout();
+		
+						setTimeout(function(){
+							// point to server or demo page
+							if ( printDebug ) console.log("loading : http://" + evmsServer + "/ev_startcharge.html?" + linkpara);
+							if ( demo ) 
+								$('#functionarea').load("demo/ev_startsuccess.html"); //demo start ok
+								//$('#functionarea').load("demo/ev_error.html); //demo start fail
+							else 
+								$('#functionarea').load("http://" + evmsServer + "/ev_startcharge.html?" + linkpara ); //real
+							setIdleTimeoutWithValue(60500);
+							evCheckResult();
+						}, 500); 	
+						
+					}
+					else if ( cardpolledfunc == 8 )
+					{
+						//ev stop poll
+						if ( printDebug ) console.log("stop poll at cardpolled for function 8");
+						doSend('CTRL','stopPoll');
+						
+						//ev check card
+						linkpara = "cardtype=" + $("#cardtype").val() + "&card=" + $("#card").val();
+						
+						hideExcept('#functionarea','left');
+						$('#functionarea').load("loading.html");
+						$('#functionarea').css("visibility","visible");
+						$('#functionarea').show("slide",{ direction: "right" });
+						clearIdleTimeout();
+						
+						setTimeout(function(){
+							//point to server or demo page
+							if ( printDebug ) console.log("loading : http://" + evmsServer + "/ev_listcharging.html?" + linkpara );
+							if ( demo ) 
+								$('#functionarea').load("demo/ev_listcharging_bycard.html"); //demo - record 
+								//$('#functionarea').load("demo/ev_error.html); //demo stop fail
+							else 
+								$('#functionarea').load("http://" + evmsServer + "/ev_listcharging.html?" + linkpara ); //real
+							setIdleTimeoutWithValue(30500);
+							evCheckPage();
+						}, 500); 	
+					}
+				}
+			});
+			
+			$("#cardpaid").click(function() {
+				if ( acceptcard ) 
+				{
+					acceptcard = false;
+					
+					if ( cardpaidfunc == 9 )
+					{
+						cardpaidfunc = 0;
+						if ( printDebug ) console.log("cardpaid for function 9, calling stop poll");
+						doSend('CTRL','stopPoll');
+						//stop charge
+						linkpara = "device=" + $('#evdevicebox').text() + "&connector=" + $('#evconnectorbox').text() + "&meter=" + $('#evmetervaluebox').text() + "&rate=" + $('#evratebox').text() + "&fee=" + $('#evchargingfeebox').text();
+						linkpara += "&cardtype=" + $("#cardtype").val() + "&card=" + $("#card").val() + "&addinfo=" + $("#addinfo").val();
+						//additional
+						linkpara += "&bay=" + $("#evbaybox").text() + "&lpn=" + $("#evlpnbox").text();
+						linkpara += "&startcardtype=" + $("#evstartcardtypebox").text() + "&startcard=" + $("#evstartcardbox").text();
+						
+						hideExcept('#functionarea','left');
+						$('#functionarea').load("loading.html");
+						$('#functionarea').css("visibility","visible");
+						$('#functionarea').show("slide",{ direction: "right" });
+						$('#homebutton').fadeOut();
+						clearIdleTimeout();
+						
+						setTimeout(function(){
+							// point to server or demo page
+							if ( printDebug ) console.log("loading : http://" + evmsServer + "/ev_stopcharge.html?" + linkpara);
+							if ( demo ) 
+								$('#functionarea').load("demo/ev_stopsuccess.html"); //demo stop ok
+								//$('#functionarea').load("demo/ev_error.html); //demo stop fail
+							else 
+								$('#functionarea').load("http://" + evmsServer + "/ev_stopcharge.html?" + linkpara ); //real
+							setIdleTimeoutWithValue(60500);
+							evCheckResult();
+						}, 500); 	
+					}
+				}
+			});
+			
+			$('#homebutton').click(function() {
+				backToHome();
+			});	
+			
+			backToHome();
+		});
+		
+		function setIdleTimeout () {
+			if ( null != idleTimer ) clearTimeout( idleTimer );
+			idleTimer = setTimeout(backToHomeTimeout,30000);
+		}
+		
+		function setIdleTimeoutWithValue ( timeout ) {
+			if ( null != idleTimer ) clearTimeout( idleTimer );
+			idleTimer = setTimeout(backToHomeTimeout,timeout);
+		}
+		
+		function clearIdleTimeout () {
+			if ( null != idleTimer ) clearTimeout( idleTimer );
+		}
+		
+		function backToSwipeCard () {
+			if ( printDebug ) console.log("back to swipe card for function " + cardpolledfunc );
+			if ( cardpolledfunc == 1 )
+			{
+				hideExcept('#swipecard','right');
+				$('#swipecard').css("visibility","visible");
+                $('#swipecard').show("slide",{ direction: "left" });
+				$('#homebutton').css("visibility","visible");
+				$('#homebutton').fadeIn();
+				//start poll again
+				acceptcard = true;
+				originalDiscounted = -1;	
+				if ( printDebug ) console.log("start poll for return to function 1");
+				doSend('CTRL','startPoll?OCTOPUS&VISA_CREDITCARD&MASTER_CREDITCARD');
+				setIdleTimeout();
+			}
+			else if ( cardpolledfunc == 2 )
+			{
+				hideExcept('#swipecard','right');
+				$('#swipecard').css("visibility","visible");
+                $('#swipecard').show("slide",{ direction: "left" });
+				$('#homebutton').css("visibility","visible");
+				$('#homebutton').fadeIn();
+				//start poll again
+				acceptcard = true;
+				mapDrawOnce = false;
+				if ( printDebug ) console.log("start poll for return to function 2");
+				doSend('CTRL','startPoll?OCTOPUS&VISA_CREDITCARD&MASTER_CREDITCARD');
+				setIdleTimeout();
+			}
+		}
+		
+		function backToHomeTimeout () {
+			if ( printDebug ) console.log("idle timeout");
+			$('#homebutton').css("visibility","hidden");
+			backToHome();
+		}
+		
+		function backToHome () {
+			if ( printDebug ) console.log("back to home");
+			acceptcard = false;
+			$('#clickme').css("visibility","visible");
+			$('#clickme').show("slide", { direction: "left" });
+			hideExcept('#clickme','right');
+			$('#homebutton').fadeOut();
+			//clear veriables
+			$('#readerid').val("");
+			$('#cardtype').val("");
+			$('#card').val("");
+			$('#remain').val("");
+			$('#addinfo').val("");
+			$('#error').val("");
+			$('#lpn').val("");
+			$('#cpvalue').val("");
+			$('#cpused').val("");
+			$('#cpexpired').val("");
+			$('#cpfac').val("");
+			$('#cpfackey').val("");
+			$('#functionarea').empty();
+			
+			$('#redeemicon').css("filter","grayscale(0%)");
+			$('#redeemicon').css("color","#000000");
+			$('#redeemicon').css("font-weight","bold");
+			$('#searchicon').css("filter","grayscale(0%)");
+			$('#searchicon').css("color","#000000");
+			$('#searchicon').css("font-weight","bold");
+			$('#evicon').css("filter","grayscale(0%)");
+			$('#evicon').css("color","#000000");
+			$('#evicon').css("font-weight","bold");
+			
+			cardpolledfunc = 0;
+			cardpaidfunc = 0;
+			mapDrawOnce = false;
+			originalDiscounted = -1;
+			parkingQueryLink = "";
+			clearIdleTimeout();
+			if ( skipInitSend ) 
+			{
+				skipInitSend = false;
+			}
+			else
+			{
+				if ( printDebug ) console.log("stop poll for back home");
+				doSend('CTRL','stopPoll');
+				if ( printDebug ) console.log("request close websocket");
+				doSend('CLOSE','');
+			}
+			if ( printDebug ) console.groupEnd();
+		}
+		
+		function hideExcept ( showthis , thisway ) {
+			if ( showthis != '#clickme' 	&& $('#clickme').is(":visible") ) 			$('#clickme').hide("slide", { direction: thisway });
+			if ( showthis != '#disclaimer' 	&& $('#disclaimer').is(":visible") ) 		$('#disclaimer').hide("slide", { direction: thisway });
+			if ( showthis != '#selfunction' && $('#selfunction').is(":visible") ) 		$('#selfunction').hide("slide", { direction: thisway });
+			if ( showthis != '#selevfunction' && $('#selevfunction').is(":visible") ) 	$('#selevfunction').hide("slide", { direction: thisway });
+			if ( showthis != '#selevfunction2' && $('#selevfunction2').is(":visible") ) $('#selevfunction2').hide("slide", { direction: thisway });
+			if ( showthis != '#swipecard'	&& $('#swipecard').is(":visible") ) 		$('#swipecard').hide("slide", { direction: thisway });
+			if ( showthis != '#swipeevcard'	&& $('#swipeevcard').is(":visible") ) 		$('#swipeevcard').hide("slide", { direction: thisway });
+			if ( showthis != '#evstartdetail'&& $('#evstartdetail').is(":visible") ) 	$('#evstartdetail').hide("slide", { direction: thisway });
+			if ( showthis != '#evstopdetail'&& $('#evstopdetail').is(":visible") ) 		$('#evstopdetail').hide("slide", { direction: thisway });
+			if ( showthis != '#evremovecable'&& $('#evremovecable').is(":visible") ) 	$('#evremovecable').hide("slide", { direction: thisway });
+			//if ( showthis != '#functionarea'&& $('#functionarea').is(":visible") ) 		$('#functionarea').hide("slide", { direction: thisway });
+		}
+		
+		/** Redemption **/
+		function backToQueryRecord () {
+			hideExcept('#functionarea','left');
+			$('#functionarea').load("loading.html");
+			$('#functionarea').css("visibility","visible");
+			$('#functionarea').show("slide",{ direction: "right" });
+			$('#homebutton').fadeOut();
+			$('#redeemicon').css("filter","grayscale(0%)");
+			$('#searchicon').css("filter","grayscale(100%)");
+			$('#evicon').css("filter","grayscale(100%)");
+			clearIdleTimeout();
+			
+			setTimeout(function(){
+				//point to server or demo page
+				if ( printDebug ) console.log("loading : http://" + zrServer + "/queryrecord.html?" + recordQueryLink );
+				if ( demo && demoRecordNotFound ) 
+					$('#functionarea').load("demo/recordnotfound.html");	//demo - not found
+				else if ( demo )
+					$('#functionarea').load("demo/queryrecord.html"); //demo - record 
+				else 
+					$('#functionarea').load("http://" + zrServer + "/queryrecord.html?" + recordQueryLink ); //real
+				setIdleTimeoutWithValue(30500);
+				//call function to wait for elements
+				checkRedemptionFunction();
+			}, 500); 	
+		}
+		
+		function showInvalidCoupon () {
+			$('#functionarea').load("loading.html");
+			$('#functionarea').css("visibility","visible");
+			$('#functionarea').show("slide",{ direction: "right" });
+			$('#homebutton').fadeOut();
+			clearIdleTimeout();
+			//reject coupon
+			if ( printDebug ) console.log("stop poll for invalid coupon");
+			doSend('CTRL','stopPoll');
+			repollCouponTime = 500;
+			fromInvalidScreen = true;
+			
+			setTimeout(function(){
+				$('#functionarea').load("invalidcoupon.html");
+				setIdleTimeoutWithValue(30500);
+				//call function to wait for elements
+				checkRedemptionFunction();
+			}, 500); 	
+		}
+		
+		function checkRedemptionFunction () {
+			//check success
+			if ( document.querySelector("#receiptbutton")!=null && document.querySelector("#maxcouponbox")!=null && document.querySelector("#discountedbox")!=null )
+			{
+				//show home button
+				$('#homebutton').css("visibility","visible");
+				$('#homebutton').fadeIn();
+				
+				if ( originalDiscounted == -1 )	
+				{	
+					//get original 
+					originalDiscounted = parseInt($('#discountedbox').text());
+				}
+				else if ( originalDiscounted != parseInt($('#discountedbox').text()) ) 
+				{
+					if ( !fromInvalidScreen )
+					{
+						//capture
+						if ( printDebug ) console.log("capture for discounted changed : %s > %s",originalDiscounted,$('#discountedbox').text());
+						doSend('CTRL','capture');
+						repollCouponTime = 3000;
+					}
+					//check receipt printable
+					$('#receiptbutton').css("visibility","visible");
+					$('#receiptbutton').show("slide",{ direction: "down" });
+				}
+				
+				console.log('#maxcouponbox',$('#maxcouponbox').text());
+				//check coupon insertable
+				if ( parseInt($('#maxcouponbox').text()) > 0 )
+				{
+					//start poll coupons
+					cardpolledfunc = 4;
+					acceptcard = true;
+					setTimeout(function(){
+						if ( printDebug ) console.log("start poll for function 4 :redemption , available maxcoupon value : %s",$('#maxcouponbox').text());
+						doSend('CTRL','startPoll?SNBCOUPON&QR_CODE');
+						//doSend('CTRL','startPoll?SNBCOUPON');
+						console.log('show insert coupons');
+						//show insert coupons						
+						$('#insertcoupon').css("visibility","visible");
+						$('#insertcoupon').show("slide",{ direction: "up" });
+					}, repollCouponTime); 
+				}
+				
+				//copy remain value
+				if ( printDebug ) console.log("clone remain value : $" + $('#remain').val());
+				$('#remainvaluebox').html("$"+$('#remain').val());
+				
+				fromInvalidScreen = false;
+			}
+			//check fail
+			else if ( document.querySelector("#redeemfailreturn")!=null )
+			{
+				//show home button
+				$('#homebutton').css("visibility","visible");
+				$('#homebutton').fadeIn();
+				//reject coupon
+				if ( printDebug ) console.log("stop poll for redeem failed");
+				doSend('CTRL','stopPoll');
+				
+				fromInvalidScreen = true;
+			}
+			else if ( document.querySelector("#notfoundreturn")!=null )
+			{
+				//show home button
+				$('#homebutton').css("visibility","visible");
+				$('#homebutton').fadeIn();
+				//stop poll
+				if ( printDebug ) console.log("stop poll for record not found");
+				doSend('CTRL','stopPoll');
+				
+				//copy remain value
+				if ( printDebug ) console.log("clone polled card : " + $('#card').val());
+				$('#maskcardbox').html($("#card").val());
+				if ( printDebug ) console.log("clone remain value : $" + $('#remain').val());
+				$('#remainvaluebox').html("$"+$('#remain').val());
+				
+				fromInvalidScreen = true;
+			}
+			//wait
+			else
+			{
+				setTimeout(function() {
+					checkRedemptionFunction();
+				}, 500);
+			}
+		}
+		
+		function redemptionReceipt () { 
+			var printpara;
+			clearIdleTimeout();
+			printpara  = "?[S]cardid=" + $('#maskcardbox').text();
+			printpara += "&[S]timein=" + ($('#entrytimebox').text().replace(/ /g, '%20'));
+			printpara += "&[V]discounted=" + parseInt($('#discountedbox').text());
+			printpara += "&[S]freeuntil=" + ($('#freeuntilbox').text().replace(/ /g, '%20'));
+			printpara += "&[S]timeprint=" + (moment().format('YYYY-MM-DD HH:mm').replace(/ /g, '%20'));
+			printpara += "&[S]readerid=" + $('#readerid').val();
+			printpara += "&[V]FUID=" + fuid;
+				
+			hideExcept('#functionarea','left');
+			$('#functionarea').load("loading.html");
+			$('#functionarea').css("visibility","visible");
+			$('#functionarea').show("slide",{ direction: "right" });
+			$('#homebutton').fadeOut();
+			
+			setTimeout(function(){
+				if ( printDebug ) console.log("start print for coupon receipt");
+				doSend('CTRL','print=webkiosk_coupon_receipt.html' + printpara );
+				$('#homebutton').css("visibility","visible");
+				$('#homebutton').fadeIn();
+				setIdleTimeoutWithValue(500);
+			}, 500); 	
+		}
+		
+		/** PGS **/
+		/**Chris 2018-01-18 Add FloorName **/
+		function switchToLocator ()	{
+			if ( printDebug ) console.log("show car location");
+			//get car floor
+			var c1 = document.getElementById("floorbox").textContent;
+			//$('#Floor').css("visibility","visible");
+			//$('#Floor').show("slide",{ direction: "right" });
+			$('#Floor' + c1).css("visibility","visible");
+			$('#Floor' + c1).show("slide",{ direction: "right" });	
+			checkIndicator();
+			
+			$('#homebutton').css("visibility","visible");
+			$('#homebutton').fadeIn();
+			setIdleTimeout();
+		}
+		
+		function backToSearch ()	{
+			//get car floor
+			var c1 = document.getElementById("floorbox").textContent;
+			$('#Floor' + c1).css("visibility","hidden");
+			$('#bubble').hide();
+			$('#bubble2').hide();
+			$('#bubble3').hide();
+			$('#bubble4').hide();
+		}
+		
+		/**Chris 2018-01-18 Add to get FloorName **/
+		function checkIndicator () {
+			if ( !mapDrawOnce )
+			{
+				mapDrawOnce = true;
+				var c1 = document.getElementById("floorbox").textContent;		
+				if ( printDebug ) console.log("car at floor : " + c1 );
+				// var c2 = document.getElementById('canvasbox').getContext('2d');
+				var c2 = document.getElementById('canvasbox' + c1).getContext('2d');
+				c2.fillStyle = '#1A75BE';
+				c2.beginPath();
+				c2.moveTo(parseInt($('#pos1box').text()), parseInt($('#pos2box').text()));
+				c2.lineTo(parseInt($('#pos3box').text()), parseInt($('#pos4box').text()));
+				c2.lineTo(parseInt($('#pos5box').text()), parseInt($('#pos6box').text()));
+				c2.lineTo(parseInt($('#pos7box').text()), parseInt($('#pos8box').text()));
+				c2.closePath();
+				c2.fill();
+			}
+			
+			//locate bubble
+			$('#bubble').css("left",parseInt($('#pos9box').text()) - ($('#bubble').width()/2) - 8 );
+			$('#bubble').css("top",parseInt($('#pos10box').text()) - ($('#bubble').height()) - 62 );
+			$('#bubble2').css("left",parseInt($('#pos9box').text()) - ($('#bubble').width()/2) - 8 );
+			$('#bubble2').css("top",parseInt($('#pos10box').text()) + 38 );
+			$('#bubble3').css("left",parseInt($('#pos9box').text()) + 6 );
+			$('#bubble3').css("top",parseInt($('#pos10box').text()) - 50 );
+			$('#bubble4').css("left",parseInt($('#pos9box').text()) - 417 );
+			$('#bubble4').css("top",parseInt($('#pos10box').text()) - 50 );
+
+			/*  hide all kiosk added by Frankie  2018-03-05 */
+			if ( $('#kiosknamebox').text() != "K01" ) 
+			{
+				$('#' + c1 + 'K01').hide();
+				$('#' + c1 + 'K01i').hide();
+			}
+			if ( $('#kiosknamebox').text() != "K02" ) 
+			{
+				$('#' + c1 + 'K02').hide();
+				$('#' + c1 + 'K02i').hide();
+			}
+			if ( $('#kiosknamebox').text() != "K03" ) 
+			{
+				$('#' + c1 + 'K03').hide();
+				$('#' + c1 + 'K03i').hide();
+			}
+			if ( $('#kiosknamebox').text() != "K04" ) 
+			{
+				$('#' + c1 + 'K04').hide();
+				$('#' + c1 + 'K04i').hide();
+			}
+			if ( $('#kiosknamebox').text() != "K05" ) 
+			{
+				$('#' + c1 + 'K05').hide();
+				$('#' + c1 + 'K05i').hide();
+			}
+			if ( $('#kiosknamebox').text() != "K06" ) 
+			{
+				$('#' + c1 + 'K06').hide();
+				$('#' + c1 + 'K06i').hide();
+			}
+		
+			var useKiosk = '#'+ c1 + $('#kiosknamebox').text();
+			
+			//check kiosk and parking bay overlap
+			if ( !collision($(useKiosk)) ) 
+			{
+				//use normal
+				$(useKiosk).fadeIn();
+				$(useKiosk+'i').hide();
+			}
+			else if ( !collision($(useKiosk+'i')) ) 
+			{
+				//use invert
+				$(useKiosk).hide();
+				useKiosk += 'i'
+				$(useKiosk).fadeIn();
+			}
+			else  
+			{
+				//use normal
+				$(useKiosk).fadeIn();
+				$(useKiosk+'i').hide();
+			}
+			if ( printDebug ) console.log("user at kiosk : " + useKiosk );
+			
+			//check kiosk and bubble overlap 
+			if ( parseInt($('#bubble').css("top")) > 0 && !collision2($('#bubble'),$(useKiosk)) ) 
+			{
+				$('#bubble').fadeIn();
+				$('#bubble2').hide();
+				$('#bubble3').hide();
+				$('#bubble4').hide();
+			}
+			else if ( (parseInt($('#bubble2').css("top")) + $('#bubble2').height()) < 1080 && !collision2($('#bubble2'),$(useKiosk)) ) 
+			{
+				$('#bubble2').fadeIn();
+				$('#bubble').hide();
+				$('#bubble3').hide();
+				$('#bubble4').hide();
+			}
+			else if ( (parseInt($('#bubble3').css("left")) + $('#bubble3').width()) < 1664 && !collision2($('#bubble3'),$(useKiosk)) ) 
+			{
+				$('#bubble3').fadeIn();
+				$('#bubble').hide();
+				$('#bubble2').hide();
+				$('#bubble4').hide();
+			}
+			else 
+			{
+				$('#bubble4').fadeIn();
+				$('#bubble').hide();
+				$('#bubble2').hide();
+				$('#bubble3').hide();
+			}
+		}
+		
+		function collision($div2) {
+		  var x1 = parseInt($('#pos7box').text());
+		  var y1 = parseInt($('#pos2box').text());
+		  var b1 = parseInt($('#pos6box').text());
+		  var r1 = parseInt($('#pos3box').text());
+		  var x2 = $div2.position().left;
+		  var y2 = $div2.position().top;
+		  var h2 = $div2.outerHeight(true);
+		  var w2 = $div2.outerWidth(true);
+		  var b2 = y2 + h2;
+		  var r2 = x2 + w2;
+		  if (b1 < y2 || y1 > b2 || r1 < x2 || x1 > r2) return false;
+		  return true;
+		}
+		
+		function collision2($div1, $div2) {
+		  var x1 = parseInt($div1.css("left")) - 50;
+		  var y1 = parseInt($div1.css("top")) - 50;
+		  var h1 = $div1.outerHeight(true) + 50;
+		  var w1 = $div1.outerWidth(true) + 50;
+		  var b1 = y1 + h1;
+		  var r1 = x1 + w1;
+		  if ( printDebug ) console.log("kiosk : " + x1 + "," + y1 + "," + h1 + "," + w1 + "," + b1 +"," + r1 );
+		  
+		  var x2 = parseInt($div2.css("left")) - 50;
+		  var y2 = parseInt($div2.css("top")) - 50;
+		  var h2 = $div2.outerHeight(true) + 50;
+		  var w2 = $div2.outerWidth(true) + 50;
+		  var b2 = y2 + h2;
+		  var r2 = x2 + w2;
+		  if ( printDebug ) console.log("bubble : " + x2 + "," + y2 + "," + h2 + "," + w2 + "," + b2 +"," + r2 );
+
+		  if (b1 < y2 || y1 > b2 || r1 < x2 || x1 > r2) return false;
+		  return true;
+		}
+		
+		/** EV **/
+		function evCheckPage () {
+			//check success
+			if ( document.querySelector("#maxpagebox")!=null && document.querySelector("#nowpagebox")!=null && document.querySelector("#evPrev")!=null && document.querySelector("#evNext")!=null )
+			{
+				if ( printDebug ) console.log("ev list awaiting at page : " + $('#nowpagebox').text() + "/" + $('#maxpagebox').text());
+				if ( parseInt($('#nowpagebox').text()) == 1 )
+				{
+					$('#evPrev').fadeOut();
+				}
+				else
+				{
+					$('#evPrev').css("visibility","visible");	
+					$('#evPrev').fadeIn();
+				}
+				
+				if ( parseInt($('#maxpagebox').text()) > parseInt($('#nowpagebox').text()) )
+				{
+					$('#evNext').css("visibility","visible");
+					$('#evNext').fadeIn();
+				}
+				else
+				{
+					$('#evNext').fadeOut();
+				}
+				
+				//if check by card and only 1 result, cuto click the one one
+				if ( cardpolledfunc == 8 )
+				{
+					if ( '1' == $('#totalbox').text() && document.querySelector("#ev_sel_0")!=null )
+					{
+						if ( printDebug ) console.log("ev list only 1 selection, auto click ev_sel_0");
+						$('#ev_sel_0').mousedown();
+					}
+				}
+				
+				//show home button
+				$('#homebutton').css("visibility","visible");
+				$('#homebutton').fadeIn();
+			}
+			else if ( document.querySelector("#notfoundreturn")!=null )
+			{
+				//copy remain value
+				if ( printDebug ) console.log("clone remain value : $" + $('#remain').val());
+				$('#remainvaluebox').html("$"+$('#remain').val());
+				
+				//show home button
+				$('#homebutton').css("visibility","visible");
+				$('#homebutton').fadeIn();
+			}
+			//wait
+			else
+			{
+				setTimeout(function() {
+					evCheckPage();
+				}, 100);
+			}
+		}
+		
+		function evNextPage ()	{
+			setIdleTimeout();
+			var targetPage;
+			targetPage = parseInt($('#nowpagebox').text());
+			targetPage++;
+			if ( printDebug ) console.log("ev list awaiting switch page : " + $('#nowpagebox').text() + " > " + targetPage);
+			if ( parseInt(targetPage) <= parseInt($('#maxpagebox').text()) )
+			{
+				$('#evrow'+$('#nowpagebox').text()).hide("slide",{ direction: "left" });
+				$('#evrow'+targetPage).css("visibility","visible");
+				$('#evrow'+targetPage).show("slide",{ direction: "right" });
+				$('#nowpagebox').text(targetPage);
+				evCheckPage();
+			}
+		}
+		
+		function evPrevPage ()	{
+			setIdleTimeout();
+			var targetPage;
+			targetPage = parseInt($('#nowpagebox').text());
+			targetPage--;
+			if ( printDebug ) console.log("ev list awaiting switch page : " + $('#nowpagebox').text() + " > " + targetPage);
+			if ( parseInt(targetPage) > 0 )
+			{
+				$('#evrow'+$('#nowpagebox').text()).hide("slide",{ direction: "right" });
+				$('#evrow'+targetPage).css("visibility","visible");
+				$('#evrow'+targetPage).show("slide",{ direction: "left" });
+				$('#nowpagebox').text(targetPage);
+				evCheckPage();
+			}
+		}
+		
+		function evBackToServiceSelect () {
+			if ( printDebug ) console.log("ev back to service selection");
+			cardpolledfunc = 0;
+			hideExcept('#functionarea','right');
+			$('#selevfunction').css("visibility","visible");
+			$('#selevfunction').show("slide",{ direction: "left" });
+			$('#homebutton').css("visibility","visible");
+			$('#redeemicon').css("filter","grayscale(100%)");
+			$('#redeemicon').css("color","#AAAAAA");
+			$('#redeemicon').css("font-weight","normal");
+			$('#searchicon').css("filter","grayscale(100%)");
+			$('#searchicon').css("color","#AAAAAA");
+			$('#searchicon').css("font-weight","normal");
+			$('#evicon').css("filter","grayscale(0%)");
+			$('#evicon').css("color","#000000");
+			$('#evicon').css("font-weight","bold");
+			$('#homebutton').fadeIn();
+			$('#functionarea').empty();
+			setIdleTimeout();
+		}
+		
+		function evAwaitingBaySelect ( evDevice , evConnector , evRate , evBay , evLpn ) {
+			$('#evdevicebox').text(evDevice);
+			$('#evconnectorbox').text(evConnector);
+			$('#evratebox').text(evRate);
+			$('#evbaybox').text(evBay);
+			$('#evlpnbox').text(evLpn);
+			//fill details
+			var Digital=new Date();
+			var hours=Digital.getHours();
+			var minutes=Digital.getMinutes();
+			var year=Digital.getFullYear();
+			var month=Digital.getMonth()+1;
+			var day=Digital.getDate();
+			if (hours<=9) hours="0"+hours;
+			if (minutes<=9) minutes="0"+minutes;
+			if (month<=9) month="0"+month;
+			if (day<=9) day="0"+day;
+			$('#evstarttime').text(year+"-"+month+"-"+day+" "+hours+":"+minutes);
+			$('#evstartlpn').text(evLpn);
+			$('#evstartbay').text(evBay);
+			$('#evstartrate').text("$"+evRate+"/kWh");
+			
+			if ( printDebug ) console.log("show details for start charge, bay : " + $('#evbaybox').text() + " , charger : " + $('#evdevicebox').text() + ":" + $('#evconnectorbox').text() + " at rate $" + $('#evratebox').text() + "/kWh" );
+			hideExcept('#evstartdetail','left');
+			$('#evstartdetail').css("visibility","visible");
+			$('#evstartdetail').show("slide",{ direction: "right" });
+			$('#homebutton').css("visibility","visible");
+			$('#homebutton').fadeIn();
+			setIdleTimeout();
+		}
+		
+		function evConfirmBaySelect () {
+			if ( printDebug ) console.log("start charge details confirmed, bay : " + $('#evbaybox').text() + " , charger : " + $('#evdevicebox').text() + ":" + $('#evconnectorbox').text() + " at rate $" + $('#evratebox').text() + "/kWh" );
+			$('#evstarteng').html("PLEASE SWIPE CARD TO START CHARGING<br>AT PARKING SPACE NO. " + $('#evbaybox').text());
+			$('#evstartchn').html("&#35531;&#20351;&#29992;&#21345;&#21855;&#21205;&#20572;&#36554;&#20301; " + $('#evbaybox').text() + " &#20805;&#38651;");
+			if ( printDebug ) console.log("start poll card for function 5");
+			cardpolledfunc = 5;
+			acceptcard = true;
+			doSend('CTRL','startPoll?OCTOPUS&VISA_CREDITCARD&MASTER_CREDITCARD');
+			hideExcept('#swipeevcard','left');
+			$('#swipeevcard').css("visibility","visible");
+			$('#swipeevcard').show("slide",{ direction: "right" });
+			$('#homebutton').css("visibility","visible");
+			$('#homebutton').fadeIn();
+			setIdleTimeout();
+		}
+		
+		function evCheckResult () {
+			//check success
+			if ( document.querySelector("#batterygif")!=null )
+			{
+				//show home button
+				$('#homebutton').css("visibility","visible");
+				$('#homebutton').fadeIn();
+				if ( printDebug ) console.log("ev start charge success");
+				setIdleTimeoutWithValue(15000);
+			}
+			else if ( document.querySelector("#evstopsuccess")!=null && document.querySelector("#evremainvaluebox")!=null )
+			{
+				//show home button
+				$('#homebutton').css("visibility","visible");
+				$('#homebutton').fadeIn();
+				if ( printDebug ) console.log("ev stop charge success");
+				setIdleTimeoutWithValue(30000);
+				
+				//copy remain value
+				if ( printDebug ) console.log("clone remain value : $" + $('#remain').val());
+				$('#evremainvaluebox').html("$"+$('#remain').val());
+			}
+			//check fail
+			else if ( document.querySelector("#evfailreturn")!=null )
+			{
+				//show home button
+				$('#homebutton').css("visibility","visible");
+				$('#homebutton').fadeIn();
+				if ( printDebug ) console.log("ev operation failed");
+				setIdleTimeoutWithValue(15000);
+			}
+			//wait
+			else
+			{
+				setTimeout(function() {
+					evCheckResult();
+				}, 500);
+			}
+		}
+		
+		function evLoadChargingList () {
+			if ( printDebug ) console.log("function 7 : ev stop charge by bay");
+			cardpolledfunc = 0;
+			$('#cardtype').val("");
+			$('#card').val("");
+			$('#remain').val("");
+			if ( printDebug ) console.log("start show charging for function 7");
+			hideExcept('#functionarea','left');
+			$('#functionarea').load("loading.html");
+			$('#functionarea').css("visibility","visible");
+			$('#functionarea').show("slide",{ direction: "right" });
+			clearIdleTimeout();
+			
+			setTimeout(function(){
+				//point to server or demo page
+				if ( printDebug ) console.log("loading : http://" + evmsServer + "/ev_listcharging.html" );
+				if ( demo ) 
+					$('#functionarea').load("demo/ev_listcharging.html"); //demo - record 
+					//$('#functionarea').load("demo/ev_error.html); //demo stop fail
+				else 
+					$('#functionarea').load("http://" + evmsServer + "/ev_listcharging.html" ); //real
+				setIdleTimeoutWithValue(30500);
+				evCheckPage();
+			}, 500); 	
+		}
+		
+		function evChargingBaySelect ( evDevice , evConnector , evRate , evBay , evLpn , evStartCardType , evStartCard , evStartCardMask , evMeterValue , evChargingFee , evImage ) {
+			//show details
+			$('#evdevicebox').text(evDevice);
+			$('#evconnectorbox').text(evConnector);
+			$('#evratebox').text(evRate);
+			$('#evbaybox').text(evBay);
+			$('#evlpnbox').text(evLpn);
+			$('#evstartcardtypebox').text(evStartCardType);
+			$('#evstartcardbox').text(evStartCard);
+			$('#evstartcardmaskbox').text(evStartCardMask);
+			$('#evmetervaluebox').text(evMeterValue);
+			$('#evchargingfeebox').text(evChargingFee);
+			//fill details
+			if ( '' == evStartCardMask )
+			{
+				$('#evchargecardte').css("visibility","hidden");
+				$('#evchargecardtc').css("visibility","hidden");
+				$('#evchargecardmask').css("visibility","hidden");
+				$('#evchargervte').css("visibility","hidden");
+				$('#evchargervtc').css("visibility","hidden");
+				$('#evremainvaluebox').css("visibility","hidden");
+			}
+			else
+			{
+				$('#evchargecardte').css("visibility","visible");
+				$('#evchargecardtc').css("visibility","visible");
+				$('#evchargecardmask').css("visibility","visible");
+				$('#evchargecardmask').text(evStartCardMask);
+				if ( evStartCardType == 3 )
+				{
+					$('#evchargervte').css("visibility","visible");
+					$('#evchargervtc').css("visibility","visible");
+					$('#evremainvaluebox').css("visibility","visible");
+					$('#evremainvaluebox').text("$"+$('#remain').val());
+				}
+			}
+			$('#evchargebay').text(evBay);
+			$('#evchargelpn').text(evLpn);
+			$('#evchargemeter').text(evMeterValue+" kWh");
+			$('#evchargerate').text("$"+evRate+" / kWh");
+			$('#evchargefee').text("$"+evChargingFee);
+			$('#evchargeimage').html("<img src='" + evImage + "' width=320 height=240>");
+			
+			//fill details
+			if ( printDebug ) console.log("show details for charging, bay : " + $('#evbaybox').text() + " , charger : " + $('#evdevicebox').text() + ":" + $('#evconnectorbox').text() + " with fee $" + $('#evchargingfeebox').text() );
+			hideExcept('#evstopdetail','left');
+			$('#evstopdetail').css("visibility","visible");
+			$('#evstopdetail').show("slide",{ direction: "right" });
+			$('#homebutton').css("visibility","visible");
+			$('#homebutton').fadeIn();
+			setIdleTimeoutWithValue(16000);
+		}
+			
+		function evChargingBayPayment () {
+			var chargingFee = $('#evchargingfeebox').text();
+			$('#evstarteng').html("PLEASE PAY CHARGING FEE $" + chargingFee );
+			$('#evstartchn').html("&#35531;&#32371;&#20184;&#20805;&#38651;&#36027;&#29992; $" + chargingFee);
+			cardpaidfunc = 9;
+			cardpolledfunc = 0;
+			acceptcard = true;
+			if ( printDebug ) console.log("start payment for function 9 , charging fee : $" + chargingFee );
+			doSend('CTRL','startPay?' + chargingFee + '&OCTOPUS&VISA_CREDITCARD&MASTER_CREDITCARD');
+			hideExcept('#swipeevcard','left');
+			$('#swipeevcard').css("visibility","visible");
+			$('#swipeevcard').show("slide",{ direction: "right" });
+			$('#homebutton').css("visibility","visible");
+			$('#homebutton').fadeIn();
+			setIdleTimeout();
+		}
+		
+		function evShowRemoveCable () {
+			if ( printDebug ) console.log("function 9 : ev charging show remove cable");
+			cardpolledfunc = 0;
+			cardpaidfunc = 0;
+			hideExcept('#evremovecable','left');
+			$('#evremovecable').css("visibility","visible");
+			$('#evremovecable').show("slide",{ direction: "right" });
+			$('#homebutton').fadeIn();
+			setIdleTimeout();
+		}
+		
+		function evChargingReceipt () { 
+			var printpara;
+			clearIdleTimeout();
+			printpara  = "?[S]cardid=" + $('#evchargestopcardmask').text();
+			printpara += "&[S]parkbay=" + $('#evchargestopbay').text();
+			printpara += "&[S]rate=" + $('#evchargestoprate').text();
+			printpara += "&[S]meter=" + $('#evchargestopmeter').text();
+			printpara += "&[S]fee=" + $('#evchargestopfee').text();
+			printpara += "&[S]timeprint=" + (moment().format('YYYY-MM-DD HH:mm').replace(/ /g, '%20'));
+			printpara += "&[S]readerid=" + $('#readerid').val();
+			printpara += "&[V]FUID=" + fuid;
+				
+			hideExcept('#functionarea','left');
+			$('#functionarea').load("loading.html");
+			$('#functionarea').css("visibility","visible");
+			$('#functionarea').show("slide",{ direction: "right" });
+			$('#homebutton').fadeOut();
+			
+			setTimeout(function(){
+				if ( printDebug ) console.log("start print for charging receipt");
+				doSend('CTRL','print=webkiosk_charging_receipt.html' + printpara );
+				evShowRemoveCable();
+			}, 500); 	
+		}
+		
+		function evChargingRecord () { 
+			var printpara;
+			clearIdleTimeout();
+			printpara  = "?[S]cardid=" + $('#card').val();
+			printpara += "&[S]parkbay=" + $('#evstartbay').text();
+			printpara += "&[S]rate=" + $('#evstartrate').text();
+			printpara += "&[S]meter=-";
+			printpara += "&[S]fee=-";
+			printpara += "&[S]timeprint=" + (moment().format('YYYY-MM-DD HH:mm').replace(/ /g, '%20'));
+			printpara += "&[S]readerid=" + $('#readerid').val();
+			printpara += "&[V]FUID=" + fuid;
+				
+			hideExcept('#functionarea','left');
+			$('#functionarea').load("loading.html");
+			$('#functionarea').css("visibility","visible");
+			$('#functionarea').show("slide",{ direction: "right" });
+			$('#homebutton').fadeOut();
+			
+			setTimeout(function(){
+				if ( printDebug ) console.log("start print for charging record");
+				doSend('CTRL','print=webkiosk_charging_receipt.html' + printpara );
+				backToHome();
+			}, 500); 	
+		}
+	</script>
+</head>
+
+<body style="background-color:#454547" onContextMenu="return false;">
+	<div id="JQueryTrigger"></div>
+	
+	<div id=leftbar>
+		<img src="\images\00-sidemenu.png">
+		<div id=WebScreenError>
+			<img src="\images\wserr.png">
+		</div>
+		<div id=redeemicon>
+			<center>
+			<img src="\images\redeem_icon.png" width=110><br>
+			FREE PARKING<br>REDEMPTION<br>兌換免費泊車
+			</center>
+		</div>
+		<div id=searchicon>
+			<center>
+			<img src="\images\search_icon.png" width=110><br>
+			CAR SEARCHING<br>&#36554;&#36635;&#25628;&#23563;
+			</center>
+		</div>
+		<!--
+		<div id=evicon>
+			<center>
+			<img src="\images\ev_icon.png" width=110><br>
+			ELECTRIC VEHICLE<br>CHARGING<br>&#38651;&#21205;&#36554;&#20805;&#38651;
+			</center>
+		</div>-->
+		<div id=homebutton>
+			<img src="\images\00-left_home.png">
+		</div>
+		
+		<div id=Clock></div>
+		<div style="color:white;" id=cardpolled>POLLED</div>
+		<div style="color:white;" id=cardpaid>PAID</div>
+		<div style="color:white;" id=cardpolling>POLLING</div>
+		<div style="color:white;" id=carderror>ERROR</div>
+		<div style="color:white;">
+			<br>
+			<!-- common -->
+			Reader ID : 		<br><input name="readerid" 	id=readerid value="" type="text"><br>
+			Card Type : 		<br><input name="cardtype" 	id=cardtype value="" type="text"><br>
+			Card Number : 		<br><input name="card" 		id=card value="" type="text"><br>
+			Remain Value : 		<br><input name="remain" 	id=remain value="" type="text"><br>
+			Add. Info : 		<br><input name="addinfo" 	id=addinfo value="" type="text"><br>
+			Card Error : 		<br><input name="error" 	id=error value="" type="text"><br>
+			<!-- pgs -->
+			Car Search LPN :	<br><input name="lpn" 		id=lpn value="" type="text"><br>
+			<!-- redemption : S&B -->
+			Coupon Value : 		<br><input name="cpvalue" 	id=cpvalue value="" type="text"><br>
+			Coupon Used : 		<br><input name="cpused" 	id=cpused value="" type="text"><br>
+			Coupon Expired : 	<br><input name="cpexpired" id=cpexpired value="" type="text"><br>
+			Coupon Fac. : 		<br><input name="cpfac" 	id=cpfac value="" type="text"><br>
+			Coupon Fac.Key : 	<br><input name="cpfackey" 	id=cpfackey value="" type="text"><br>
+		</div>
+	</div>
+	
+	<div class=rightarea id=functionarea>
+	</div>
+	
+	<div class=rightarea id=evremovecable>
+		<img src="\images\ev-disconnect.png" style="position: relative; top: 0; left: 0;"/>
+		<div class=titleeng>CHARGING STOPPED, PLEASE REMOVE CABLE</div>
+		<div class=titlechn>&#24050;&#32066;&#27490;&#20805;&#38651;  &#35531;&#31227;&#38500;&#20805;&#38651;&#32218;</div>
+		<div class=right_button_gray style="left: 672px;" onmousedown=backToHome()>
+			<img class=button_icon src="\images\button_quit.png"/>
+			<div class=button_text>Quit &#38626;&#38283;</div>
+		</div>
+	</div>
+	
+	<div class=rightarea id=evstopdetail>
+		<img src="\images\04-record.png" style="position: relative; top: 0; left: 0;"/>
+		<div class=recordtitleeng>YOUR EV CHARGING STATUS</div>
+		<div class=recordtitlechn>&#20320;&#30340;&#38651;&#21205;&#36554;&#20805;&#38651;&#29376;&#24907;</div>
+
+		<div class=recordL1Eev id=evchargecardte>CARD ID</div>
+		<div class=recordL1Cev id=evchargecardtc>&#21345;&#34399; :</div>
+		<div class=recordL1Vev id=evchargecardmask></div>
+		<div class=recordL2Eev id=evchargervte>REM. VALUE</div>
+		<div class=recordL2Cev id=evchargervtc>&#39192;&#38989; :</div>
+		<div class=recordL2Vev id=evremainvaluebox></div>
+		<div class=recordL3Eev>PARKING SPACE NO.</div>
+		<div class=recordL3Cev>&#20572;&#36554;&#20301; :</div>
+		<div class=recordL3Vev id=evchargebay></div>
+		<div class=recordL7Eev>LICENSE PLATE NO.</div>
+		<div class=recordL7Cev>&#36554;&#29260; :</div>
+		<div class=recordL7Vev id=evchargelpn></div>
+		<div class=recordL4Eev>POWER CONSUMED</div>
+		<div class=recordL4Cev>&#24050;&#29992;&#38651;&#37327; :</div>
+		<div class=recordL4Vev id=evchargemeter></div>
+		<div class=recordL5Eev>CHARGING RATE</div>
+		<div class=recordL5Cev>&#20805;&#38651;&#25910;&#36027; :</div>
+		<div class=recordL5Vev id=evchargerate></div>
+		<div class=recordL6Eev>TOTAL FEE</div>
+		<div class=recordL6Cev>&#32317;&#20805;&#38651;&#36027;&#29992; :</div>
+		<div class=recordL6Vev id=evchargefee></div>
+		
+		<div id=evchargeimage> 
+		</div>
+		
+		<div class=left_button_gray onmousedown=evBackToServiceSelect()>
+			<img class=button_icon src="\images\button_back.png"/>
+			<div class=button_text>Back &#36820;&#22238;</div>
+		</div>
+		<div class=right_button_orange onmousedown=evChargingBayPayment()>
+			<img class=button_icon src="\images\button_stop.png"/>
+			<div class=button_text style="top:104px;">Stop Charging and Pay<br>&#20572;&#27490;&#20805;&#38651;&#21450;&#20184;&#27454;</div>
+		</div>
+	</div>
+	
+	<div class=rightarea id=evstartdetail style="background-color:#454547">
+		<img src="\images\02-blank-shadow.png" style="position: relative; top: 0; left: 0;"/>
+		<div class=titleeng>PLEASE CONFIRM CHARGING DETAILS</div>
+		<div class=titlechn>&#35531;&#30906;&#35469;&#20805;&#38651;&#36039;&#26009;</div>
+		<div class=functiontable>
+			<table border=0 width=100% cellspacing="5">
+				<tr>
+					<td class=funcevtdfill rowspan=11>&nbsp;</td>
+					<td class=funcevtdtitle>START CHARGING TIME:</td>
+					<td class=funcevtdfill rowspan=2>&nbsp;</td>
+					<td class=funcevtd rowspan=2 id=evstarttime></td>
+					<td class=funcevtdfill rowspan=11>&nbsp;</td>
+				</tr>
+				<tr>
+					<td class=funcevtdtitle>&#38283;&#22987;&#20805;&#38651;&#26178;&#38291;:</td>
+				</tr>
+				<!-- ---------------------------------------- -->
+				<tr>
+					<td class=funcevtdfill colspan=3>&nbsp;</td>
+				</tr>
+				<tr>
+					<td class=funcevtdtitle>LICENSE PLATE NO.:</td>
+					<td class=funcevtdfill rowspan=2>&nbsp;</td>
+					<td class=funcevtd rowspan=2  id=evstartlpn></td>
+				</tr>
+				<tr>
+					<td class=funcevtdtitle>&#36554;&#29260;:</td>
+				</tr>
+				<!-- ---------------------------------------- -->
+				<tr>
+					<td class=funcevtdfill colspan=3>&nbsp;</td>
+				</tr>
+				<tr>
+					<td class=funcevtdtitle>PARKING SPACE NO.:</td>
+					<td class=funcevtdfill rowspan=2>&nbsp;</td>
+					<td class=funcevtd rowspan=2  id=evstartbay></td>
+				</tr>
+				<tr>
+					<td class=funcevtdtitle>&#20572;&#36554;&#20301;:</td>
+				</tr>
+				<!-- ---------------------------------------- -->
+				<tr>
+					<td class=funcevtdfill colspan=3>&nbsp;</td>
+				</tr>
+				<tr>
+					<td class=funcevtdtitle>CHARGING RATE:</td>
+					<td class=funcevtdfill rowspan=2>&nbsp;</td>
+					<td class=funcevtd rowspan=2  id=evstartrate></td>
+				</tr>
+				<tr>
+					<td class=funcevtdtitle>&#20805;&#38651;&#20729;&#26684;:</td>
+				</tr>
+			</table>
+		</div>
+		<div class=left_button_gray onmousedown=evBackToServiceSelect()>
+			<img class=button_icon src="\images\button_back.png"/>
+			<div class=button_text>Back &#36820;&#22238;</div>
+		</div>
+		<div class=right_button_orange onmousedown=evConfirmBaySelect()>
+			<img class=button_icon src="\images\button_tick.png"/>
+			<div class=button_text>Confirm &#30906;&#23450;</div>
+		</div>
+	</div>
+	
+	<div class=rightarea id=swipeevcard>
+		<img src="\images\03-swipecard.png" style="position: relative; top: 0; left: 0;"/>
+		<div id=evstarteng class=titleeng style="top: 25px;"></div>
+		<div id=evstartchn class=titlechn></div>
+		<div id=downarrow>
+			<img src="\images\03-swipecard_down_arrow.png" class=vertfloating>
+		</div>
+		<div id=rightarrow>
+			<img src="\images\03-swipecard_right_arrow.png" class=floating>
+		</div>
+	</div>
+	
+	<div class=rightarea id=swipecard>
+		<img src="\images\03-swipecard.png" style="position: relative; top: 0; left: 0;"/>
+		<div class=titleeng>PLEASE SWIPE THE SAME CARD AS USED UPON ENTRY</div>
+		<div class=titlechn>&#35531;&#20351;&#29992;&#20837;&#22580;&#27850;&#36554;&#21345;</div>
+		<div id=downarrow>
+			<img src="\images\03-swipecard_down_arrow.png" class=vertfloating>
+		</div>
+		<div id=rightarrow>
+			<img src="\images\03-swipecard_right_arrow.png" class=floating>
+		</div>
+	</div>
+	
+	<div class=rightarea id=selevfunction2 style="background-color:#454547">
+		<img src="\images\02-blank-shadow.png" style="position: relative; top: 0; left: 0;"/>
+		<div class=titleeng>PLEASE RETRIEVE YOUR EV CHARGING STATUS</div>
+		<div class=titlechn>&#35531;&#26597;&#35426;&#20320;&#30340;&#38651;&#21205;&#36554;&#29376;&#27841;</div>
+		<div class=functiontable>
+			<table border=0 width=100% cellspacing="50">
+				<tr>
+					<!-- 
+					<td class=functd id=selfunction7>PHOTO OF YOUR EV<br><font style="font-size:64px">&#38651;&#21205;&#36554;&#29031;&#29255;</font></td>
+					<td class=functd id=selfunction8>CARD SWIPED<br>FOR CHARGING<br><font style="font-size:64px">&#29992;&#20316;&#21855;&#21205;<br>&#20805;&#38651;&#30340;&#21345;</font></td>
+					-->
+				</tr>
+			</table>
+		</div>
+		<div class=right_button_gray style="left: 672px;" onmousedown=evBackToServiceSelect()>
+			<img class=button_icon src="\images\button_back.png"/>
+			<div class=button_text>Back &#36820;&#22238;</div>
+		</div>
+	</div>
+	
+	<div class=rightarea id=selevfunction style="background-color:#454547">
+		<img src="\images\02-blank-shadow.png" style="position: relative; top: 0; left: 0;"/>
+		<div class=titleeng>PLEASE SELECT SERVICE</div>
+		<div class=titlechn>&#35531;&#36984;&#25799;&#26381;&#21209;</div>
+		<div class=functiontable>
+			<table border=0 width=100% cellspacing="50">
+				<tr>
+					<td class=functd id=selfunction5>START<br>CHARGING<br><font style="font-size:64px">&#38283;&#22987;&#20805;&#38651;</font></td>
+					<td class=functd id=selfunction8>CHECK STATUS /<br>STOP CHARGING<br><font style="font-size:64px">&#26597;&#35426;&#29376;&#27841; /</font><br><font style="font-size:64px">&#20572;&#27490;&#20805;&#38651;</font></td>
+				</tr>
+			</table>
+		</div>
+	</div>
+	
+	<div class=rightarea id=selfunction style="background-color:#454547">
+		<img src="\images\02-blank-shadow.png" style="position: relative; top: 0; left: 0;"/>
+		<div class=titleeng>PLEASE SELECT SERVICE</div>
+		<div class=titlechn>&#35531;&#36984;&#25799;&#26381;&#21209;</div>
+		<div class=functiontable>
+			<table border=0 width=100% cellspacing="50">
+				<tr>
+					<td class=functd id=selfunction1><img src="\images\redeem_icon.png" width=250><br>FREE PARKING<br>REDEMPTION<br><font style="font-size:64px">兌換免費泊車</font></td>
+					<td class=functd id=selfunction2><img src="\images\search_icon.png" width=250><br>CAR<br>SEARCHING<br><font style="font-size:64px">&#36554;&#36635;&#25628;&#23563;</font></td>
+					<!--<td class=functd id=selfunction3><img src="\images\ev_icon.png" width=250><br>ELECTRIC VEHICLE<br>CHARGING<br><font style="font-size:64px">&#38651;&#21205;&#36554;&#20805;&#38651;</font></td>-->
+				</tr>
+			</table>
+		</div>
+	</div>
+	
+	<div class=rightarea id=disclaimer>
+		<img src="\images\01-privacy-disclaimer.png" style="position: relative; top: 0; left: 0;"/>
+		<div id=disclaimertext>
+			<center>
+			<b>Coupon Redemption, Car Searching and Electric Vehicle Charging Services</b>
+			<br>&lt;&lt;Privacy Policy and Disclaimer&gt;&gt;
+			<br>
+			</center>
+			<br>Festival Walk (2011) Limited (&#8220;FW2011&#8221;) and the Property Manager strongly value your right to personal data. FW2011 and the Property Manager will only collect your personal data for free parking coupon redemption, car searching and/or electric vehicle charging services (&#8220;the services&#8221;) in and related to this carpark only.
+			<br><br>The services aim to
+			<br>&nbsp;&nbsp;&nbsp;1.	provide parking coupon redemption*
+			<br>&nbsp;&nbsp;&nbsp;2.	search the location of vehicle in the parking bay* 
+			<br>&nbsp;&nbsp;&nbsp;3.	enable power supply facility for electric vehicle charging
+			<br>&nbsp;&nbsp;&nbsp;* In junction with the same entry card/device (Octopus/Visa/Mastercard/other payment method)
+			<br><br>FW2011 and the Property Manager do not guarantee the accuracy or reliability of the services.  FW2011 and the Property Manager shall bear no liability whatsoever for any damage, loss, claim, compensation or consequential loss to any third party choosing to use the services. 
+			<br><br>Press &#8220;Accept&#8221; if you agree to the use of your personal data by FW2011 and the Property Manager for the services in this carpark. 
+			<br>Press &#8220;Not Accept&#8221; if you do not agree and you will be unable to use the services.
+			<br><br>If there are any discrepancies between the English version and the Chinese translation of this disclaimer, the English version, for all intents and purposes, shall prevail.
+			<br><br><br>
+			<center><b>&#20812;&#25563;&#27850;&#36554;&#21173;&#12289;&#36554;&#36635;&#25628;&#23563;&#21450;&#38651;&#21205;&#36554;&#20805;&#38651;&#26381;&#21209;</b>
+			<br>&lt;&lt;&#31169;&#38577;&#25919;&#31574;&#21450;&#20813;&#36012;&#32882;&#26126;&gt;&gt;
+			<br>
+			</center>
+			<br>&#21448;&#19968;&#22478;(2011)&#26377;&#38480;&#20844;&#21496;(&#19979;&#31281;&#12300;&#21448;&#19968;&#22478;2011&#12301;)&#21450;&#29289;&#26989;&#31649;&#29702;&#20844;&#21496;&#23562;&#37325;&#38307;&#19979;&#30340;&#20491;&#20154;&#36039;&#26009;&#31169;&#38577;&#27402;&#21033;&#65292;&#23559;&#23565;&#38307;&#19979;&#30340;&#20491;&#20154;&#36039;&#26009;&#21152;&#20197;&#20445;&#23494;&#21450;&#21482;&#29992;&#20316;&#26412;&#20572;&#36554;&#22580;&#30340;&#20812;&#25563;&#27850;&#36554;&#21173;&#12289;&#25628;&#23563;&#36554;&#36635;&#20572;&#27850;&#20301;&#32622;&#21450;/&#25110;&#38651;&#21205;&#36554;&#20805;&#38651;&#26381;&#21209;(&#19979;&#31281;&#12300;&#27492;&#26381;&#21209;&#12301;)&#12290;
+			<br><br>&#27492;&#26381;&#21209;&#26088;&#22312;&#28858;&#26412;&#20572;&#36554;&#22580;&#20351;&#29992;&#32773;&#25552;&#20379;&#65306;
+			<br>&nbsp;&nbsp;&nbsp;1.	&#27850;&#36554;&#21173;&#20812;&#25563;*
+			<br>&nbsp;&nbsp;&nbsp;2.	&#23563;&#25214;&#36914;&#22580;&#36554;&#36635;&#30340;&#20572;&#27850;&#20301;&#32622;*
+			<br>&nbsp;&nbsp;&nbsp;3.	&#38651;&#21205;&#36554;&#20805;&#36554;&#26381;&#21209;
+			<br>&nbsp;&nbsp;&nbsp;* &#20351;&#29992;&#26381;&#21209;&#38920;&#20986;&#31034;&#39387;&#36914;&#26412;&#20572;&#36554;&#22580;&#26178;&#24050;&#30331;&#35352;&#20043;&#20843;&#36948;&#36890;&#21345;&#12289;VISA&#12289;&#33836;&#20107;&#36948;&#20449;&#29992;&#21345;&#25110;&#20854;&#20182;&#25903;&#20184;&#26041;&#24335;&#12290;
+			<br><br>&#21448;&#19968;&#22478;2011&#21450;&#29289;&#26989;&#31649;&#29702;&#20844;&#21496;&#23565;&#27492;&#26381;&#21209;&#30340;&#36039;&#35338;&#28310;&#30906;&#24615;&#21450;&#21487;&#38752;&#24615;&#19981;&#20316;&#20986;&#20219;&#20309;&#20445;&#35657;&#12290;&#25925;&#27492;&#65292;&#21448;&#19968;&#22478;2011&#21450;&#29289;&#26989;&#31649;&#29702;&#20844;&#21496;&#23565;&#20351;&#29992;&#32773;&#20351;&#29992;&#27492;&#26381;&#21209;&#32780;&#23566;&#33268;&#30340;&#20219;&#20309;&#25613;&#22750;&#12289;&#25613;&#22833;&#12289;&#36064;&#20767;&#25110;&#23565;&#20219;&#20309;&#31532;&#19977;&#26041;&#36896;&#25104;&#30340;&#38291;&#25509;&#25613;&#22833;&#27010;&#28961;&#36012;&#20219;&#12290;
+			<br><br>&#22914;&#38307;&#19979;&#36984;&#25799;&#12300;&#21516;&#24847;&#12301;&#65292;&#21063;&#20195;&#34920;&#38307;&#19979;&#25509;&#21463;&#27492;&#26381;&#21209;&#20043;&#31169;&#38577;&#21450;&#20813;&#36012;&#32882;&#26126;&#12290;
+			<br>&#22914;&#38307;&#19979;&#19981;&#21516;&#24847;&#26412;&#32882;&#26126;&#65292;&#35531;&#36984;&#25799;&#12300;&#19981;&#21516;&#24847;&#12301;&#20006;&#36864;&#20986;&#27492;&#26381;&#21209;&#12290;
+			<br><br>&#26412;&#20813;&#36012;&#32882;&#26126;&#20043;&#33521;&#12289;&#20013;&#25991;&#29256;&#26412;&#22914;&#26377;&#20219;&#20309;&#24046;&#21029;&#65292;&#19968;&#27010;&#20197;&#33521;&#25991;&#29256;&#26412;&#28858;&#28310;&#12290;
+		</div>
+		<div id=disclaimerno class=left_button_gray>
+			<img class=button_icon src="\images\button_cross.png"/>
+			<div class=button_text>Not Accept &#19981;&#21516;&#24847;</div>
+		</div>
+		<div id=disclaimeryes class=right_button_orange>
+			<img class=button_icon src="\images\button_tick.png"/>
+			<div class=button_text>Accept &#21516;&#24847;</div>
+		</div>
+	</div>
+	
+	<div class=rightarea id=clickme>
+		<img src="\images\01-startup.png">
+	</div>
+	
+</body>
+</html>

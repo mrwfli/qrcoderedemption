@@ -1,5 +1,6 @@
 package com.dksh.qrcoderedemption.service;
 
+import com.dksh.qrcoderedemption.constant.ResponseHtml;
 import com.dksh.qrcoderedemption.domain.*;
 import com.dksh.qrcoderedemption.model.QRCodeResposeModel;
 import com.dksh.qrcoderedemption.model.VerifyResponseModel;
@@ -29,17 +30,11 @@ public class QRCodeRedemptionValidationImp implements  QRCodeRedemptionValidatio
     public String VerifyValidate(VerifyResponseModel data,String cardId,long hourlycoupon, long cardtype){
 
         if(data == null){
-            return "<img src=\"\\images\\cp03-operation_failed_2.png\">\n" +
-                    "<div class=right_button>\n" +
-                    "\t<img src=\"\\images\\return_small.png\" onmousedown=backToQueryRecord()>\n" +
-                    "</div>";
+            return ResponseHtml.operation_failed;
         }
 
         if(data.getStatus() == -1){
-            return "<img src=\"\\images\\connect_server_failed.png\" style=\"position: relative; top: 0; left: 0;\"/>\n" +
-                    "<div class=right_button>\n" +
-                    "\t<img src=\"\\images\\return_small.png\" onmousedown=backToQueryRecord()>\n" +
-                    "</div>";
+            return ResponseHtml.invalid_coupon;
         }
 
         long redemption_status = data.getData().getRedemption_status();
@@ -47,10 +42,7 @@ public class QRCodeRedemptionValidationImp implements  QRCodeRedemptionValidatio
         String gift_code = data.getData().getGift_code();
 
         if(redemption_status >= 2){
-            return "<img src=\"\\images\\cp02-invalid-coupon.png\">\n" +
-                    "<div class=right_button>\n" +
-                    "\t<img src=\"\\images\\return_small.png\" onmousedown=backToQueryRecord()>\n" +
-                    "</div>";
+            return  ResponseHtml.invalid_coupon;
         }
 
         Date date = new Date(System.currentTimeMillis());
@@ -60,10 +52,7 @@ public class QRCodeRedemptionValidationImp implements  QRCodeRedemptionValidatio
         QRCODE_REDEMPTION_LOG log = carParkService.GetRedemptionLogByIdAndCreateDate(redemption_id,now); //qrcode_redemption_log_repository.findByREDEMPTIONIDAndCREATEDATE(redemption_id,now);
 
         if(log != null){
-            return "<img src=\"\\images\\cp02-invalid-coupon.png\">\n" +
-                    "<div class=right_button>\n" +
-                    "\t<img src=\"\\images\\return_small.png\" onmousedown=backToQueryRecord()>\n" +
-                    "</div>";
+            return ResponseHtml.invalid_coupon;
         }
 
         long qrcode_hour = Long.parseLong(gift_code.split("-")[1]);
@@ -71,10 +60,7 @@ public class QRCodeRedemptionValidationImp implements  QRCodeRedemptionValidatio
         long remaind_hour = MaxFreeHours - hourlycoupon;
 
         if(remaind_hour < qrcode_hour) {
-            return "<img src=\"\\images\\over_hour_limit.png\">\n" +
-                    "<div class=right_button>\n" +
-                    "\t<img src=\"\\images\\return_small.png\" onmousedown=backToQueryRecord()>\n" +
-                    "</div>";
+            return ResponseHtml.over_hour_limit;
         }
 
         return "";
@@ -83,18 +69,8 @@ public class QRCodeRedemptionValidationImp implements  QRCodeRedemptionValidatio
     @Override
     public String RedemptionValidate(QRCodeResposeModel data) {
 
-        if(data == null){
-            return "<img src=\"\\images\\quota_used_up.png\">\n" +
-                    "<div class=right_button>\n" +
-                    "\t<img src=\"\\images\\return_small.png\" onmousedown=backToQueryRecord()>\n" +
-                    "</div>";
-        }
-
         if(data.getStatus() == -1){
-            return "<img src=\"\\images\\cp02-invalid_coupon.png\">\n" +
-                    "<div class=right_button>\n" +
-                    "\t<img src=\"\\images\\return_small.png\" onmousedown=backToQueryRecord()>\n" +
-                    "</div>";
+            return ResponseHtml.invalid_coupon;
         }
 
         return  "";
@@ -183,33 +159,69 @@ public class QRCodeRedemptionValidationImp implements  QRCodeRedemptionValidatio
         formatter= new SimpleDateFormat("yyyy-MM-dd HH:mm");
         Date freetiltime = new Date(cardinpark.getFREETILLTIME().getTime() - (PaidGraceMinutes * 60 * 1000));
 
-        return "<img src=\"\\images\\cp01-record.png\" style=\"position: relative; top: 0; left: 0;\" />\n" +
-                "<div id=maskcardbox class=box>"+ cardinpark.getCARDID() +"</div>\n" +
-                "<div id=entrytimebox class=box>"+formatter.format(cardinpark.getENTRYTIME())+"</div>\n" +
-                "<div id=freeuntilbox class=box>"+formatter.format(freetiltime) +"</div>\n" +
-                "<div id=maxcouponbox class=box>"+ ((double)MaxFreeHours - cardinpark.getHOURLYCOUPON()) + "</div>\n" +
-                "<div id=maxcouponunitbox class=box>Hour(s)</div>\n" +
-                "\n" +
-                "<div style=\"color:white;\">\n" +
-                "    <b>Entry Card :</b>\n" +
-                "    <div id=cardbox>"+cardinpark.getCARDID()+"</div>\n" +
-                "    <b>Entry Card Type :</b>\n" +
-                "    <div id=cardtypebox>"+cardinpark.getCARDTYPE()+"</div>\n" +
-                "    <b>Discounted :</b>\n" +
-                "    <div id=discountedbox>"+cardinpark.getHOURLYCOUPON()+"</div>\n" +
-                "    <b>Coupon Fac Code :</b>\n" +
-                "    <div id=faccodebox>"+cardinpark.getFACILITYKEY()+"</div>\n" +
-                "</div>\n" +
-                "<div class=vertfloating id=insertcoupon style=\"visibility:hidden;\">\n" +
-                "    <img src=\"\\images\\cp01-coupon.png\">\n" +
-                "</div>\n" +
-                "\n" +
-                "<div class=left_button id=receiptbutton style=\"visibility:hidden;\">\n" +
-                "    <img src=\"\\images\\cp01-receipt.png\" onmousedown=redemptionReceipt()>\n" +
-                "</div>\n" +
-                "<div class=right_button>\n" +
-                "    <img src=\"\\images\\cp01-quit.png\" onmousedown=backToHome()>\n" +
-                "</div>";
+        String result = "<img src=\"\\images\\cp01-record.png\" style=\"position: relative; top: 0; left: 0;\" />\n";
+
+        if( ((double)MaxFreeHours - cardinpark.getHOURLYCOUPON()) > 0){
+            result += "<div class=recordcouponeng>PLEASE SCAN QR CODE / INSERT PARKING COUPON ONE BY ONE</div>\n" +
+                    "<div class=recordcouponchn>請掃瞄二維碼 / 逐一放入泊車券</div>\n" +
+                    "<div id=maskcardbox class=box>"+ cardinpark.getCARDID() +"</div>\n" +
+                    "<div id=entrytimebox class=box>"+formatter.format(cardinpark.getENTRYTIME())+"</div>\n" +
+                    "<div id=freeuntilbox class=box>"+formatter.format(freetiltime) +"</div>\n" +
+                    "<div id=maxcouponbox class=box>"+ ((double)MaxFreeHours - cardinpark.getHOURLYCOUPON()) + "</div>\n" +
+                    "<div id=maxcouponunitbox class=box>Hour(s)</div>\n" +
+                    "\n" +
+                    "<div style=\"color:white;\">\n" +
+                    "    <b>Entry Card :</b>\n" +
+                    "    <div id=cardbox>"+cardinpark.getCARDID()+"</div>\n" +
+                    "    <b>Entry Card Type :</b>\n" +
+                    "    <div id=cardtypebox>"+cardinpark.getCARDTYPE()+"</div>\n" +
+                    "    <b>Discounted :</b>\n" +
+                    "    <div id=discountedbox>"+cardinpark.getHOURLYCOUPON()+"</div>\n" +
+                    "    <b>Coupon Fac Code :</b>\n" +
+                    "    <div id=faccodebox>"+cardinpark.getFACILITYKEY()+"</div>\n" +
+                    "</div>\n" +
+                    "<div class=vertfloating id=insertcoupon style=\"visibility:hidden;\">\n" +
+                    "    <img src=\"\\images\\cp01-coupon.png\">\n" +
+                    "</div>\n" +
+                    "\n" +
+                    "<div class=left_button id=receiptbutton style=\"visibility:hidden;\">\n" +
+                    "    <img src=\"\\images\\cp01-receipt.png\" onmousedown=redemptionReceipt()>\n" +
+                    "</div>\n" +
+                    "<div class=right_button>\n" +
+                    "    <img src=\"\\images\\cp01-quit.png\" onmousedown=backToHome()>\n" +
+                    "</div>";
+        }
+        else{
+
+            result += "<div id=maskcardbox class=box>"+ cardinpark.getCARDID() +"</div>\n" +
+                    "<div id=entrytimebox class=box>"+formatter.format(cardinpark.getENTRYTIME())+"</div>\n" +
+                    "<div id=freeuntilbox class=box>"+formatter.format(freetiltime) +"</div>\n" +
+                    "<div id=maxcouponbox class=box>"+ ((double)MaxFreeHours - cardinpark.getHOURLYCOUPON()) + "</div>\n" +
+                    "<div id=maxcouponunitbox class=box>Hour(s)</div>\n" +
+                    "\n" +
+                    "<div style=\"color:white;\">\n" +
+                    "    <b>Entry Card :</b>\n" +
+                    "    <div id=cardbox>"+cardinpark.getCARDID()+"</div>\n" +
+                    "    <b>Entry Card Type :</b>\n" +
+                    "    <div id=cardtypebox>"+cardinpark.getCARDTYPE()+"</div>\n" +
+                    "    <b>Discounted :</b>\n" +
+                    "    <div id=discountedbox>"+cardinpark.getHOURLYCOUPON()+"</div>\n" +
+                    "    <b>Coupon Fac Code :</b>\n" +
+                    "    <div id=faccodebox>"+cardinpark.getFACILITYKEY()+"</div>\n" +
+                    "</div>\n" +
+                    "<div class=vertfloating id=insertcoupon style=\"visibility:hidden;\">\n" +
+                    "    <img src=\"\\images\\cp01-coupon.png\">\n" +
+                    "</div>\n" +
+                    "\n" +
+                    "<div class=left_button id=receiptbutton style=\"visibility:hidden;\">\n" +
+                    "    <img src=\"\\images\\cp01-receipt.png\" onmousedown=redemptionReceipt()>\n" +
+                    "</div>\n" +
+                    "<div class=right_button>\n" +
+                    "    <img src=\"\\images\\cp01-quit.png\" onmousedown=backToHome()>\n" +
+                    "</div>";
+        }
+
+        return result;
     }
 
 }

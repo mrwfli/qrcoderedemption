@@ -33,7 +33,7 @@ public class CSVService {
         Date date = new Date(System.currentTimeMillis() - 24 * 60 * 60 * 1000); // yesterday
         String yesterday = dateFormat.format(date);
 
-        List<QRCODE_REDEMPTION_LOG> logs = carParkService.GetRedemptionLogByCreateDate(yesterday); //qrcode_redemption_log_repository.findByCREATEDATE(yesterday);
+        List<QRCODE_REDEMPTION_LOG> logs = carParkService.GetRedemptionLogByStatusAndCreateDate("Open", yesterday); //qrcode_redemption_log_repository.findByCREATEDATE(yesterday);
 
         ByteArrayInputStream stream = CSVHelper.QRCodeRedemptionLogToCSV(logs);
 

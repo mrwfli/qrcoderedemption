@@ -16,4 +16,8 @@ public interface QRCODE_REDEMPTION_LOG_Repository extends JpaRepository<QRCODE_R
     @Query(value = "select * from QRCODE_REDEMPTION_LOG where TO_CHAR(CREATEDATE,'yyyy-MM-dd') = :DATE ", nativeQuery = true)
     List<QRCODE_REDEMPTION_LOG> findByCREATEDATE(String DATE);
 
+    @Query(value = "select * from QRCODE_REDEMPTION_LOG where Status =:status and TO_CHAR(CREATEDATE,'yyyy-MM-dd') = :DATE ", nativeQuery = true)
+    List<QRCODE_REDEMPTION_LOG> findByStatusAndCREATEDATE(String status, String DATE);
+
+    QRCODE_REDEMPTION_LOG findByREDEMPTIONID(String REDEMPTIONID);
 }

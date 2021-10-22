@@ -1,0 +1,15 @@
+***Before deployment, please backup production files.***
+
+1. qrcode_table.sql
+	create table in database.
+	
+2. FestivalWalk Redemption Service For Kiosk
+	copy RedemptionService\Resources\Pages\* to current .NET corresponding folder.
+
+3. Kiosk
+	copy the dksh.jar and wwwroot\* to current KIOSK folder
+	
+4. QRCODE API
+	1. copy the folder to server
+	2. update the classes/application.yml, database setting.
+	3. execute the run.bat to start the service.

@@ -32,6 +32,8 @@ public class RedemptionData
     }
 
     public String getGift_code() {
+        //user FW Fion requirement, the max redemption housr is 2 hours.
+        if(gift_code.equals("FP-03")) gift_code = "FP-02";
         return gift_code;
     }
 

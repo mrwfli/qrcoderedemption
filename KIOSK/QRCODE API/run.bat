@@ -1,0 +1,1 @@
+java -jar qrcoderedemption-1.0.0.jar

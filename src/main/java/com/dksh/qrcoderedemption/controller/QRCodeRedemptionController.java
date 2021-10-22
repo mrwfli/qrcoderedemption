@@ -1,5 +1,6 @@
 package com.dksh.qrcoderedemption.controller;
 
+import com.dksh.qrcoderedemption.constant.ResponseHtml;
 import com.dksh.qrcoderedemption.domain.CardInPark;
 import com.dksh.qrcoderedemption.model.QRCodeResposeModel;
 import com.dksh.qrcoderedemption.model.VerifyResponseModel;
@@ -44,8 +45,8 @@ public class QRCodeRedemptionController  {
 
             String result = "";
 
-            String[] arrStr = qrcode.split("\\|\\|");
-            qrcode = arrStr[1];
+//            String[] arrStr = qrcode.split("\\|\\|");
+//            qrcode = arrStr[1];
 
             List<Long> cardtypels = new ArrayList<>();
 
@@ -60,23 +61,31 @@ public class QRCodeRedemptionController  {
             CardInPark cardinpark = carParkService.GetCardInPark(cardId,cardtypels); //cardInParkRepository.findByCARDIDAndCARDTYPEIn(cardId,cardtypels);
 
             if(cardinpark == null) {
-                return "<img src=\"\\images\\record_not_found.jpg\">\n" +
-                        "<div class=right_button>\n" +
-                        "\t<img src=\"\\images\\return_small.png\" onmousedown=backToQueryRecord()>\n" +
-                        "</div>\n";
+                return ResponseHtml.record_not_found;
             }
 
+            //verify the qrcode
             VerifyResponseModel verify_result = redemptionService.Verify(qrcode);
 
             result = qrCodeRedemptionValidation.VerifyValidate(verify_result,cardId,(long)cardinpark.getHOURLYCOUPON(),cardtype);
 
            if(!result.equals("")) return  result;
 
+            //redeem the qrcode
             QRCodeResposeModel redemption_result = redemptionService.Redemption(qrcode);
 
-            result = qrCodeRedemptionValidation.RedemptionValidate(redemption_result);
-
-            if(!result.equals("")) return result;
+            //redeem success
+            if(redemption_result != null){
+                result = qrCodeRedemptionValidation.RedemptionValidate(redemption_result);
+                if(!result.equals("")) return result;
+            }
+            else {
+                //redeem failed
+                LOGGER.info("cannot call redemption api");
+                redemption_result = new QRCodeResposeModel();
+                redemption_result.setMessage("cannot call redemption api");
+                redemption_result.setStatus(-1);
+            }
 
             try {
                 qrCodeRedemptionValidation.UpdateDatabase(verify_result,redemption_result.getMessage(),qrcode,redemption_result.getStatus(), cardinpark,deviceId);
@@ -94,58 +103,18 @@ public class QRCodeRedemptionController  {
             LOGGER.error(ex.getMessage());
             LOGGER.error("QRCode:"+ qrcode);
             System.out.println(ex);
-            return "<img src=\"\\images\\cp02-invalid_coupon.png\">\n" +
-                    "<div class=right_button>\n" +
-                    "\t<img src=\"\\images\\cp01-quit.png\" onmousedown=backToHome()>\n" +
-                    "</div>";
+            return ResponseHtml.invalid_coupon;
         }
         catch (HttpException ex){
             LOGGER.error(ex.getMessage());
             LOGGER.error("QRCode:"+ qrcode);
-            return "<img src=\"\\images\\connect_server_failed.png\">\n" +
-                    "<div class=right_button>\n" +
-                    "\t<img src=\"\\images\\return_small.png\" onmousedown=backToQueryRecord()>\n" +
-                    "</div>";
+            return ResponseHtml.connect_server_failed;
         }
         catch (Exception ex){
             LOGGER.error(ex.getMessage());
             LOGGER.error("QRCode:"+ qrcode);
             System.out.println(ex);
-            return "<img src=\"\\images\\cp03-operation_failed.png\">\n" +
-                    "<div class=right_button>\n" +
-                    "\t<img src=\"\\images\\cp01-quit.png\" onmousedown=backToHome()>\n" +
-                    "</div>";
+            return ResponseHtml.operation_failed;
         }
     }
-
-//    @RequestMapping(value = "Redemption", method = RequestMethod.GET)
-//    @ResponseBody
-//    public String Redemption(@RequestParam(defaultValue = "", name = "qrcode") String qrcode) throws IOException {
-//
-//
-//        ObjectMapper mapper = new ObjectMapper();
-//
-//        // service.Verify(qrcode);
-//
-//        System.out.println("Redemption:" + qrcode);
-//        // RedemptionResposeModel result = service.Redemption(qrcode);
-//        return "";
-//    }
-
-//
-//    @GetMapping("/download")
-//    public ResponseEntity<Resource> getFile() throws HttpException, IOException {
-//        String filename = "tutorials.csv";
-//        ByteArrayInputStream csv =  fileService.GenerateCSV();
-//        Resource resource = new CommonInputStreamResource(csv);
-//        redemptionService.UploadCSV(resource);
-//
-//        InputStreamResource file = new InputStreamResource(csv);
-//
-//        return ResponseEntity.ok()
-//                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filename)
-//                .contentType(MediaType.parseMediaType("application/csv"))
-//                .body(file);
-//    }
-
 }
