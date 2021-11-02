@@ -2,8 +2,13 @@ server:
   port: 8002
 
 spring:
+  profiles:
+    active:
+    - dev
+  
   application:
     name: qrcoderedemption
+    
   datasource:
     url: jdbc:oracle:thin:@192.168.200.164:1521:ORCL
     username: db
@@ -23,8 +28,9 @@ Redemption:
   PaidGraceMinutes: 15
 
 ScheduledTasks:
- # Cron:  "0/30 * * * * *"
-  Cron: "1 12 * * * *"
+  Cron:  "0/30 * * * * *"
+#  Cron: "1 12 * * * *"
+  Date: "2021-10-10" #when the date is empty, it will retrieve yesterday data
 
   ###
   #Minute

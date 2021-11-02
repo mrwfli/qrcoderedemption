@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 
 @Service
@@ -27,7 +28,7 @@ public class QRCodeRedemptionValidationImp implements  QRCodeRedemptionValidatio
     private  SimpleDateFormat formatter;
 
     @Override
-    public String VerifyValidate(VerifyResponseModel data,String cardId,long hourlycoupon, long cardtype){
+    public String VerifyValidate(VerifyResponseModel data, String cardId, long hourlycoupon, long cardtype){
 
         if(data == null){
             return ResponseHtml.operation_failed;
@@ -39,7 +40,6 @@ public class QRCodeRedemptionValidationImp implements  QRCodeRedemptionValidatio
 
         long redemption_status = data.getData().getRedemption_status();
         String redemption_id =  data.getData().getRedemption_id();
-        String gift_code = data.getData().getGift_code();
 
         if(redemption_status >= 2){
             return  ResponseHtml.invalid_coupon;
@@ -55,11 +55,9 @@ public class QRCodeRedemptionValidationImp implements  QRCodeRedemptionValidatio
             return ResponseHtml.invalid_coupon;
         }
 
-        long qrcode_hour = Long.parseLong(gift_code.split("-")[1]);
-
         long remaind_hour = MaxFreeHours - hourlycoupon;
 
-        if(remaind_hour < qrcode_hour) {
+        if(remaind_hour <= 0 ) {
             return ResponseHtml.over_hour_limit;
         }
 
@@ -77,22 +75,24 @@ public class QRCodeRedemptionValidationImp implements  QRCodeRedemptionValidatio
     }
 
     @Override
-    public void UpdateDatabase(VerifyResponseModel verify_result,String msg,String Qrcode,int status, CardInPark cardinpark, long DeviceId) {
+    public void UpdateDatabase(VerifyResponseModel verify_result,String msg, String Qrcode, int status, CardInPark cardinpark, long DeviceId, long hourlycoupon) {
         Date date = new Date(System.currentTimeMillis());
 
         String gift_code = verify_result.getData().getGift_code();
         long qrcode_hour = Long.parseLong(gift_code.split("-")[1]);
 
-        long entrytime  = cardinpark.getENTRYTIME().getTime();
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(cardinpark.getENTRYTIME());
+        cal.add(Calendar.HOUR, (int)(cardinpark.getHOURLYCOUPON() + Math.min(qrcode_hour, MaxFreeHours - hourlycoupon)));
+        cal.add(Calendar.MINUTE, PaidGraceMinutes);
+        Date freetiltime = cal.getTime();
 
-        double h = cardinpark.getHOURLYCOUPON() + qrcode_hour +  PaidGraceMinutes / 60;
-
-        Date freetiltime = new Date(entrytime + ((int)h * 60 * 60 * 1000));
         cardinpark.setFREETILLTIME(freetiltime);
+
         cardinpark.setGRACEPERIODGRANTED(PaidGraceMinutes);
         cardinpark.setISPAID(1);
         cardinpark.setPAYTIME(date);
-        cardinpark.setHOURLYCOUPON(cardinpark.getHOURLYCOUPON() + qrcode_hour);
+        cardinpark.setHOURLYCOUPON(cardinpark.getHOURLYCOUPON() +  Math.min(qrcode_hour, MaxFreeHours - hourlycoupon));
 
         //cardInParkRepository.save(cardinpark);
         carParkService.SaveCarInPark(cardinpark);
@@ -108,20 +108,24 @@ public class QRCodeRedemptionValidationImp implements  QRCodeRedemptionValidatio
         // cardEventLogRepository.save(log);
         carParkService.SaveCardEventLog(log);
 
+        //Date TRANTIME, String TRANDATE, int TRANTYPE, long CARDTYPE, String CARDID, long PAYCARDTYPE, String PAYCARDID, double TRANAMOUNT, long SBARTICLEID, long READERID, long DEVICEID, long FACILITYKEY, long ZSETTLMNTID, int PROCESSLEVEL, int RESERVED1, int RESERVED2
         formatter= new SimpleDateFormat("yyyy-MM-dd");
         CardTransaction tran = new CardTransaction(date,
-                formatter.format(date),
+                 formatter.format(date),
                 5,
-                cardinpark.getCARDTYPE(),
-                cardinpark.getCARDID(),
+                 cardinpark.getCARDTYPE(),
+                 cardinpark.getCARDID(),
                 6,
-                verify_result.getData().getRedemption_id(),
-                qrcode_hour,
+                 verify_result.getData().getRedemption_id(),
+                 Math.min(qrcode_hour, MaxFreeHours - hourlycoupon),
                 0,
-                DeviceId,
+                1,
+                 DeviceId,
+                 cardinpark.getFACILITYKEY(),
                 0,
-                cardinpark.getFACILITYKEY(),
-                0,0,0,0);
+                0,
+                0,
+                0);
 
        // cardTransactionRepository.save(tran);
         carParkService.SaveCardTransaction(tran);
@@ -157,14 +161,16 @@ public class QRCodeRedemptionValidationImp implements  QRCodeRedemptionValidatio
     public String CompletedProcess(CardInPark cardinpark) {
 
         formatter= new SimpleDateFormat("yyyy-MM-dd HH:mm");
-        Date freetiltime = new Date(cardinpark.getFREETILLTIME().getTime() - (PaidGraceMinutes * 60 * 1000));
+
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(cardinpark.getFREETILLTIME());
+        cal.add(Calendar.MINUTE, -PaidGraceMinutes);
+        Date freetiltime = cal.getTime();
 
         String result = "<img src=\"\\images\\cp01-record.png\" style=\"position: relative; top: 0; left: 0;\" />\n";
 
         if( ((double)MaxFreeHours - cardinpark.getHOURLYCOUPON()) > 0){
-            result += "<div class=recordcouponeng>PLEASE SCAN QR CODE / INSERT PARKING COUPON ONE BY ONE</div>\n" +
-                    "<div class=recordcouponchn>請掃瞄二維碼 / 逐一放入泊車券</div>\n" +
-                    "<div id=maskcardbox class=box>"+ cardinpark.getCARDID() +"</div>\n" +
+            result += "<div id=maskcardbox class=box>"+ cardinpark.getCARDID() +"</div>\n" +
                     "<div id=entrytimebox class=box>"+formatter.format(cardinpark.getENTRYTIME())+"</div>\n" +
                     "<div id=freeuntilbox class=box>"+formatter.format(freetiltime) +"</div>\n" +
                     "<div id=maxcouponbox class=box>"+ ((double)MaxFreeHours - cardinpark.getHOURLYCOUPON()) + "</div>\n" +

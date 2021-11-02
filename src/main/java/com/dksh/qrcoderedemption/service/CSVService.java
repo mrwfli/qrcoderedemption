@@ -26,14 +26,9 @@ public class CSVService {
     @Autowired
     private CarParkService carParkService;
 
-    private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+    public ByteArrayInputStream GenerateCSV(String date) throws Exception {
 
-    public ByteArrayInputStream GenerateCSV() throws Exception {
-
-        Date date = new Date(System.currentTimeMillis() - 24 * 60 * 60 * 1000); // yesterday
-        String yesterday = dateFormat.format(date);
-
-        List<QRCODE_REDEMPTION_LOG> logs = carParkService.GetRedemptionLogByStatusAndCreateDate("Open", yesterday); //qrcode_redemption_log_repository.findByCREATEDATE(yesterday);
+        List<QRCODE_REDEMPTION_LOG> logs = carParkService.GetRedemptionLogByStatusAndCreateDate("Open", date); //qrcode_redemption_log_repository.findByCREATEDATE(yesterday);
 
         ByteArrayInputStream stream = CSVHelper.QRCodeRedemptionLogToCSV(logs);
 

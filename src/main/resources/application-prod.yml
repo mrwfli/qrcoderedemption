@@ -1,0 +1,37 @@
+server:
+    port: 8003
+
+spring:
+    application:
+        name: qrcoderedemption
+    datasource:
+        url: jdbc:oracle:thin:@192.168.200.164:1521:ORCL
+        username: db
+        password: db
+        driver-class-name: oracle.jdbc.OracleDriver
+        platform: org.hibernate.dialect.Oracle12cDialect
+    jpa:
+        open-in-view: false
+
+QRCode:
+    Verfy: "https://fwhk.cccdihk.com/carpark-api/verify/"
+    Redemption: "https://fwhk.cccdihk.com/carpark-api/redeem/"
+    CSV: "https://fwhk.cccdihk.com/carpark-api/sync/"
+
+Redemption:
+    MaxFreeHours: 5
+    PaidGraceMinutes: 15
+
+ScheduledTasks:
+    Cron:  "0/30 * * * * *"
+    #  Cron: "1 12 * * * *"
+    Date: "" #when the date is empty, it will retrieve yesterday data
+
+    ###
+    #Minute
+    #Hour
+    #Day of Month
+    #Month
+    #Day of Week
+    #Command
+    ####

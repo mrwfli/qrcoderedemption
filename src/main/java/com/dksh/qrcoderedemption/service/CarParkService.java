@@ -56,7 +56,7 @@ public class CarParkService {
        cardEventLogRepository.save(log);
     }
 
-    public void  SaveCardTransaction(CardTransaction tran){
+    public void SaveCardTransaction(CardTransaction tran){
         cardTransactionRepository.save(tran);
     }
 

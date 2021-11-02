@@ -1,5 +1,6 @@
 package com.dksh.qrcoderedemption.controller;
 
+import com.dksh.qrcoderedemption.constant.ResponseHtml;
 import com.dksh.qrcoderedemption.service.CarParkService;
 import com.dksh.qrcoderedemption.service.QRCodeRedemptionValidation;
 import com.dksh.qrcoderedemption.service.RedemptionService;
@@ -48,10 +49,7 @@ class QRCodeRedemptionControllerTest {
                         .accept(MediaType.APPLICATION_JSON)
         )
                 .andExpect(status().isOk())
-                .andExpect(content().string("<img src=\"\\images\\record_not_found.jpg\">\n" +
-                        "<div class=right_button>\n" +
-                        "\t<img src=\"\\images\\return_small.png\" onmousedown=backToQueryRecord()>\n" +
-                        "</div>\n"));
+                .andExpect(content().string(ResponseHtml.record_not_found));
     }
 
 }
